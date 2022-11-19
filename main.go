@@ -46,6 +46,7 @@ func main() {
 		errChan := make(chan error)
 		var err error
 		if btnToggle { //启动
+			//todo 检查是否已经启动
 			btn.SetText("启动中...")
 			if err = start(errChan); err != nil {
 				btn.SetText(fmt.Sprintf("启动失败,error:%s", err.Error()))
@@ -54,6 +55,7 @@ func main() {
 			}
 			btn.SetText("停止")
 		} else { //停止
+			//todo 检查是否未启动
 			btn.SetText("停止中...")
 			if err = end(errChan); err != nil {
 				btn.SetText(fmt.Sprintf("停止失败,error:%s", err.Error()))
