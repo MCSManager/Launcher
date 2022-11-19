@@ -1,0 +1,2 @@
+sleep 2
+echo "command 2 output arg: $1"
