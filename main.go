@@ -15,16 +15,6 @@ import (
 
 //go build -ldflags -H=windowsgui main.go
 
-func start(errChan chan error) error {
-	go cmd.Start("./out/test", errChan)
-	return <-errChan
-}
-
-func end(errChan chan error) error {
-	go cmd.End("test", errChan)
-	return <-errChan
-}
-
 func main() {
 	fontPath := "./config/msyh.ttc"
 	os.Setenv("FYNE_FONT", fontPath)
@@ -40,33 +30,51 @@ func main() {
 
 	statusLabel := widget.NewLabelWithData(statusLabelText)
 
+	//守护进程管理
+	daemon := cmd.NewProcessMgr("ping", "-c5", "www.baidu.com")
+
 	btn := widget.NewButton("启动", nil)
 	btnToggle := false
+
+	//监听程序运行状态
+	daemon.ListenStop(func(err error) {
+		content := "已停止运行"
+		if err != nil {
+			content = fmt.Sprintf("%s\nerror: %s", content, err.Error())
+		}
+		statusLabelText.Set(content)
+		btn.SetText("启动")
+		btnToggle = !btnToggle
+	})
+
 	btn.OnTapped = func() {
 		btnToggle = !btnToggle
 		btn.Disable()
-		errChan := make(chan error)
+		defer btn.Enable()
 		var err error
 		if btnToggle { //启动
-			//todo 检查是否已经启动
+			if daemon.Started {
+				return
+			}
 			btn.SetText("启动中...")
-			if err = start(errChan); err != nil {
+			if err = daemon.Start(); err != nil {
 				btn.SetText(fmt.Sprintf("启动失败,error:%s", err.Error()))
 			} else {
 				statusLabelText.Set("正在运行")
 			}
 			btn.SetText("停止")
 		} else { //停止
-			//todo 检查是否未启动
+			if !daemon.Started {
+				return
+			}
 			btn.SetText("停止中...")
-			if err = end(errChan); err != nil {
+			if err = daemon.End(); err != nil {
 				btn.SetText(fmt.Sprintf("停止失败,error:%s", err.Error()))
 			} else {
 				statusLabelText.Set("未运行")
 			}
 			btn.SetText("启动")
 		}
-		btn.Enable()
 	}
 
 	// btn_color := canvas.NewRectangle(
