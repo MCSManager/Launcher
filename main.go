@@ -2,15 +2,15 @@ package main
 
 import (
 	"fmt"
+	"fyne.io/fyne/v2/data/binding"
+	"os"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
-	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
-	"image/color"
 	"mcsmanager.com/desktop-app/cmd"
-	"os"
 )
 
 //go build -ldflags -H=windowsgui main.go
@@ -33,10 +33,12 @@ func main() {
 	w := a.NewWindow("MCSManager 面板管理小工具")
 
 	w.Resize(fyne.Size{Width: 280, Height: 360})
-	daemonLabel := widget.NewLabel("daemon output")
-	daemonOutput := widget.NewLabel("")
-	webLabel := widget.NewLabel("web output")
-	webOutput := widget.NewLabel("")
+
+	// 数据源双向绑定
+	statusLabelText := binding.NewString()
+	statusLabelText.Set("Initial value")
+
+	statusLabel := widget.NewLabelWithData(statusLabelText)
 
 	btn := widget.NewButton("启动", nil)
 	btnToggle := false
@@ -51,7 +53,7 @@ func main() {
 			if err = start(errChan); err != nil {
 				btn.SetText(fmt.Sprintf("启动失败,error:%s", err.Error()))
 			} else {
-				daemonOutput.SetText("daemon程序正在运行")
+				statusLabelText.Set("正在运行")
 			}
 			btn.SetText("停止")
 		} else { //停止
@@ -60,25 +62,25 @@ func main() {
 			if err = end(errChan); err != nil {
 				btn.SetText(fmt.Sprintf("停止失败,error:%s", err.Error()))
 			} else {
-				daemonOutput.SetText("daemon程序已停止")
+				statusLabelText.Set("未运行")
 			}
 			btn.SetText("启动")
 		}
 		btn.Enable()
 	}
 
-	btn_color := canvas.NewRectangle(
-		color.NRGBA{R: 0, G: 0, B: 255, A: 255})
+	// btn_color := canvas.NewRectangle(
+	// 	color.NRGBA{R: 0, G: 0, B: 255, A: 255})
 	container1 := container.New(
 		// layout of container
 		layout.NewMaxLayout(),
 		// first use btn color
-		btn_color,
+		// btn_color,
 		// 2nd btn widget
 		btn,
 	)
 
-	content := container.New(layout.NewVBoxLayout(), daemonLabel, daemonOutput, webLabel, webOutput, layout.NewSpacer(), container1)
+	content := container.New(layout.NewVBoxLayout(), statusLabel, layout.NewSpacer(), container1)
 
 	w.SetContent(content)
 
