@@ -1,9 +1,9 @@
 package cmd
 
 import (
+	"fmt"
 	"os/exec"
-	"path/filepath"
-	"runtime"
+	"syscall"
 )
 
 type ProcessMgr struct {
@@ -12,6 +12,7 @@ type ProcessMgr struct {
 	Started  bool
 	startErr chan error
 	exited   chan error
+	cmder    *exec.Cmd
 }
 
 func NewProcessMgr(path string, args ...string) *ProcessMgr {
@@ -26,6 +27,7 @@ func (pm *ProcessMgr) ListenStop(callback func(err error)) {
 			case err := <-pm.exited:
 				callback(err)
 				pm.Started = false
+				fmt.Println("stop")
 			}
 		}
 	}()
@@ -37,24 +39,17 @@ func (pm *ProcessMgr) Start() error {
 }
 
 func (pm *ProcessMgr) run() {
-	cmder := exec.Command(pm.Path, pm.Args...)
-	err := cmder.Start()
+	pm.cmder = exec.Command(pm.Path, pm.Args...)
+	err := pm.cmder.Start()
 	pm.startErr <- err
 	pm.Started = true
-	pm.exited <- cmder.Wait()
+	pm.exited <- pm.cmder.Wait()
 }
 
 func (pm *ProcessMgr) End() error {
-	processName := filepath.Base(pm.Path)
-
-	var cmder *exec.Cmd
-	if runtime.GOOS != "windows" {
-		cmder = exec.Command("killall", "-9", processName)
-	} else {
-		//todo 待验证
-		cmder = exec.Command("taskkill", "/F", "/im", processName)
+	if pm.cmder == nil {
+		return nil
 	}
-	err := cmder.Run()
-	pm.Started = false
+	err := pm.cmder.Process.Signal(syscall.SIGTERM)
 	return err
 }
