@@ -44,7 +44,7 @@ func main() {
 		}
 		statusLabelText.Set(content)
 		btn.SetText("启动")
-		btnToggle = !btnToggle
+		btnToggle = false
 	})
 
 	btn.OnTapped = func() {
