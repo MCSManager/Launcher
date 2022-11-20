@@ -31,7 +31,7 @@ func main() {
 	statusLabel := widget.NewLabelWithData(statusLabelText)
 
 	//守护进程管理
-	daemon := cmd.NewProcessMgr("ping", "-c5", "www.baidu.com")
+	daemon := cmd.NewProcessMgr("ping", "www.baidu.com")
 
 	btn := widget.NewButton("启动", nil)
 	btnToggle := false
@@ -73,7 +73,6 @@ func main() {
 			} else {
 				statusLabelText.Set("未运行")
 			}
-			btn.SetText("启动")
 		}
 	}
 
