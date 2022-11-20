@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os/exec"
 	"syscall"
 )
@@ -27,7 +26,6 @@ func (pm *ProcessMgr) ListenStop(callback func(err error)) {
 			case err := <-pm.exited:
 				callback(err)
 				pm.Started = false
-				fmt.Println("stop")
 			}
 		}
 	}()
