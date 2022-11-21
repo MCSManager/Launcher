@@ -110,7 +110,7 @@ func main() {
 
 	content := container.New(layout.NewVBoxLayout(), paddingContainer1, layout.NewSpacer(), paddingContainer2, paddingContainer3)
 
-	window.SetContent(content)
+	window.SetContent(container.New(layout.NewPaddedLayout(), content))
 
 	window.ShowAndRun()
 }
