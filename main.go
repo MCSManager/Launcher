@@ -5,8 +5,6 @@ import (
 	"image/color"
 	"os"
 
-	"fyne.io/fyne/v2/canvas"
-
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
@@ -14,37 +12,48 @@ import (
 	"fyne.io/fyne/v2/widget"
 	"mcsmanager.com/desktop-app/cmd"
 	"mcsmanager.com/desktop-app/uiw"
+	"mcsmanager.com/desktop-app/utils"
 )
 
 //go build -ldflags -H=windowsgui main.go
 
 func main() {
 
-	STOPPED_TEXT := "未运行"
-	STARTED_TEXT := "运行中"
+	STOPPED_TEXT := "状态: 未运行"
+	STARTED_TEXT := "状态: 正在运行"
 
 	fontPath := "./config/msyh.ttc"
 	os.Setenv("FYNE_FONT", fontPath)
 
-	a := app.New()
-	w := a.NewWindow("MCSManager 面板管理小程序")
+	app := app.New()
+	window := app.NewWindow("MCSManager Launcher")
 
-	w.Resize(fyne.Size{Width: 280, Height: 360})
+	window.Resize(fyne.Size{Width: 320, Height: 260})
+	window.SetCloseIntercept(func() {
+		fmt.Println("正在关闭窗口...")
+		os.Exit(0)
+	})
 
 	statusLabel := uiw.NewMyLabel(STOPPED_TEXT)
+	statusLabel.SetFontSize(12)
+	tipLabel := uiw.NewMyLabel("端口: ")
+	netAddrLabel := uiw.NewMyLabel("23333")
+	netAddrLabel.SetFontSize(12)
+	netAddrLabel.SetColor(utils.GRAY)
+	tipLabel.SetFontSize(12)
+	tipLabelWrapper := container.New(layout.NewHBoxLayout(), tipLabel.Canvas, netAddrLabel.Canvas)
 
-	tipLabel := uiw.NewMyLabel("请打开浏览器访问 http://localhost:23333/ 来使用。")
-
-	// exitTipLabel := uiw.NewMyLabel("必须先点击“关闭”按钮才可关闭窗口，否则可能会有数据损坏。")
-	statusTipLabel := uiw.NewMyLabel("状态")
-
-	exitTipLabel := canvas.NewText("必须点击关闭后台程序才可关闭窗口，否则可能会有数据损坏。", &color.RGBA{1, 2, 3, 200})
-	exitTipLabel.TextSize = 11
+	// exitTipLabel := uiw.NewMyLabel("必须点击关闭后台程序才可关闭窗口。")
+	// exitTipLabel.SetFontSize(11)
+	// exitTipLabel.SetColor(&color.RGBA{1, 2, 3, 200})
 
 	//守护进程管理
 	daemon := cmd.NewProcessMgr("ping", "www.baidu.com")
 
 	btn := widget.NewButton("启动后台程序", nil)
+	openBrower := widget.NewButton("访问面板", func() {
+		fmt.Println("打开浏览器")
+	})
 	btnToggle := false
 
 	//监听程序运行状态
@@ -72,8 +81,7 @@ func main() {
 				btn.SetText(fmt.Sprintf("启动失败,error:%s", err.Error()))
 			} else {
 				statusLabel.SetText(STARTED_TEXT)
-				statusLabel.SetColor(color.RGBA{0, 244, 0, 255})
-				// statusLabel.Canvas.Resize(fyne.Size{Height: 300, Width: 100})
+				statusLabel.SetColor(utils.GREEN)
 				statusLabel.Canvas.Refresh()
 			}
 			btn.SetText("停止后台程序")
@@ -96,15 +104,16 @@ func main() {
 		btn,
 	)
 
-	firstLine := container.New(
-		layout.NewHBoxLayout(),
-		statusTipLabel.Canvas,
-		statusLabel.Canvas,
-	)
+	infoLabel := uiw.NewMyLabel("MCSManager 面板启动器")
+	infoLabel.SetFontSize(12)
 
-	content := container.New(layout.NewVBoxLayout(), firstLine, tipLabel.Canvas, layout.NewSpacer(), exitTipLabel, btnContainer)
+	paddingContainer1 := container.New(layout.NewPaddedLayout(), infoLabel.Canvas)
+	paddingContainer2 := container.New(layout.NewPaddedLayout(), container.New(layout.NewVBoxLayout(), statusLabel.Canvas, tipLabelWrapper))
+	paddingContainer3 := container.New(layout.NewPaddedLayout(), container.New(layout.NewVBoxLayout(), btnContainer, openBrower))
 
-	w.SetContent(content)
+	content := container.New(layout.NewVBoxLayout(), paddingContainer1, layout.NewSpacer(), paddingContainer2, paddingContainer3)
 
-	w.ShowAndRun()
+	window.SetContent(content)
+
+	window.ShowAndRun()
 }
