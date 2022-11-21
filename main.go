@@ -8,6 +8,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 	"mcsmanager.com/desktop-app/cmd"
@@ -31,7 +32,11 @@ func main() {
 	window.Resize(fyne.Size{Width: 320, Height: 260})
 	window.SetCloseIntercept(func() {
 		fmt.Println("正在关闭窗口...")
-		os.Exit(0)
+		dialog.ShowConfirm("警告", "确定要退出程序吗？", func(b bool) {
+			if b {
+				os.Exit(0)
+			}
+		}, window)
 	})
 
 	statusLabel := uiw.NewMyLabel(STOPPED_TEXT)
@@ -47,7 +52,13 @@ func main() {
 	//守护进程管理
 	daemon := cmd.NewProcessMgr("ping", "www.baidu.com")
 
-	btn := widget.NewButton("启动后台程序", nil)
+	operationButton := widget.NewButton("启动后台程序", nil)
+	// btnColor := canvas.NewRectangle(utils.BLUE)
+	btnWrapper := container.New(
+		layout.NewMaxLayout(),
+		// btnColor,
+		operationButton,
+	)
 	openBrower := widget.NewButton("访问面板", func() {
 		fmt.Println("打开浏览器")
 	})
@@ -55,40 +66,41 @@ func main() {
 
 	//监听程序运行状态
 	daemon.ListenStop(func(err error) {
+
 		content := "已停止运行"
 		if err != nil {
 			content = fmt.Sprintf("%s\nerror: %s", content, err.Error())
 			fmt.Println(content)
 		}
-		btn.SetText("启动后台程序")
+		operationButton.SetText("启动后台程序")
 		btnToggle = false
 	})
 
-	btn.OnTapped = func() {
+	operationButton.OnTapped = func() {
 		btnToggle = !btnToggle
-		btn.Disable()
-		defer btn.Enable()
+		operationButton.Disable()
+		defer operationButton.Enable()
 		var err error
 		if btnToggle { //启动
 			if daemon.Started {
 				return
 			}
-			btn.SetText("启动中...")
+			operationButton.SetText("启动中...")
 			if err = daemon.Start(); err != nil {
-				btn.SetText(fmt.Sprintf("启动失败,error:%s", err.Error()))
+				operationButton.SetText(fmt.Sprintf("启动失败,error:%s", err.Error()))
 			} else {
 				statusLabel.SetText(STARTED_TEXT)
 				statusLabel.SetColor(utils.GREEN)
 				statusLabel.Canvas.Refresh()
 			}
-			btn.SetText("停止后台程序")
+			operationButton.SetText("停止后台程序")
 		} else { //停止
 			if !daemon.Started {
 				return
 			}
-			btn.SetText("停止中...")
+			operationButton.SetText("停止中...")
 			if err = daemon.End(); err != nil {
-				btn.SetText(fmt.Sprintf("停止失败,error:%s", err.Error()))
+				operationButton.SetText(fmt.Sprintf("停止失败,error:%s", err.Error()))
 			} else {
 				statusLabel.SetText(STOPPED_TEXT)
 				statusLabel.SetColor(color.Black)
@@ -96,17 +108,12 @@ func main() {
 		}
 	}
 
-	btnContainer := container.New(
-		layout.NewMaxLayout(),
-		btn,
-	)
-
 	infoLabel := uiw.NewMyLabel("MCSManager 面板启动器")
 	infoLabel.SetFontSize(12)
 
 	paddingContainer1 := container.New(layout.NewPaddedLayout(), infoLabel.Canvas)
 	paddingContainer2 := container.New(layout.NewPaddedLayout(), container.New(layout.NewVBoxLayout(), statusLabel.Canvas, tipLabelWrapper))
-	paddingContainer3 := container.New(layout.NewPaddedLayout(), container.New(layout.NewVBoxLayout(), btnContainer, openBrower))
+	paddingContainer3 := container.New(layout.NewPaddedLayout(), container.New(layout.NewVBoxLayout(), btnWrapper, openBrower))
 
 	content := container.New(layout.NewVBoxLayout(), paddingContainer1, layout.NewSpacer(), paddingContainer2, paddingContainer3)
 
