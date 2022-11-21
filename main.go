@@ -2,8 +2,11 @@ package main
 
 import (
 	"fmt"
-	"fyne.io/fyne/v2/data/binding"
+	"image/color"
 	"os"
+
+	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/data/binding"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -18,17 +21,24 @@ import (
 func main() {
 	fontPath := "./config/msyh.ttc"
 	os.Setenv("FYNE_FONT", fontPath)
-	//fmt.Println("U %v", utils.IsFileExists(fontPath))
+
 	a := app.New()
-	w := a.NewWindow("MCSManager 面板管理小工具")
+	w := a.NewWindow("MCSManager 面板管理小程序")
 
 	w.Resize(fyne.Size{Width: 280, Height: 360})
 
 	// 数据源双向绑定
 	statusLabelText := binding.NewString()
-	statusLabelText.Set("Initial value")
+	statusLabelText.Set("未运行")
 
 	statusLabel := widget.NewLabelWithData(statusLabelText)
+
+	tipLabel := widget.NewLabel("请打开浏览器访问 http://localhost:23333/ 来使用。")
+
+	// exitTipLabel := widget.NewLabel("必须先点击“关闭”按钮才可关闭窗口，否则可能会有数据损坏。")
+	statusTipLabel := widget.NewLabel("状态")
+	exitTipLabel := canvas.NewText("必须先点击“关闭”按钮才可关闭窗口，否则可能会有数据损坏。", color.Black)
+	exitTipLabel.TextSize = 12
 
 	//守护进程管理
 	daemon := cmd.NewProcessMgr("ping", "www.baidu.com")
@@ -76,18 +86,18 @@ func main() {
 		}
 	}
 
-	// btn_color := canvas.NewRectangle(
-	// 	color.NRGBA{R: 0, G: 0, B: 255, A: 255})
-	container1 := container.New(
-		// layout of container
+	btnContainer := container.New(
 		layout.NewMaxLayout(),
-		// first use btn color
-		// btn_color,
-		// 2nd btn widget
 		btn,
 	)
 
-	content := container.New(layout.NewVBoxLayout(), statusLabel, layout.NewSpacer(), container1)
+	firstLine := container.New(
+		layout.NewHBoxLayout(),
+		statusTipLabel,
+		statusLabel,
+	)
+
+	content := container.New(layout.NewVBoxLayout(), firstLine, tipLabel, layout.NewSpacer(), exitTipLabel, btnContainer)
 
 	w.SetContent(content)
 
