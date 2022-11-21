@@ -36,12 +36,9 @@ func main() {
 
 	statusLabel := uiw.NewMyLabel(STOPPED_TEXT)
 	statusLabel.SetFontSize(12)
-	tipLabel := uiw.NewMyLabel("端口: ")
-	netAddrLabel := uiw.NewMyLabel("23333")
-	netAddrLabel.SetFontSize(12)
-	netAddrLabel.SetColor(utils.GRAY)
+	tipLabel := uiw.NewMyLabel("端口: 23333")
 	tipLabel.SetFontSize(12)
-	tipLabelWrapper := container.New(layout.NewHBoxLayout(), tipLabel.Canvas, netAddrLabel.Canvas)
+	tipLabelWrapper := container.New(layout.NewHBoxLayout(), tipLabel.Canvas)
 
 	// exitTipLabel := uiw.NewMyLabel("必须点击关闭后台程序才可关闭窗口。")
 	// exitTipLabel.SetFontSize(11)
