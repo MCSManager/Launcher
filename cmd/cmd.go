@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"io"
 	"os/exec"
 )
 
@@ -8,6 +9,7 @@ type ProcessMgr struct {
 	Path     string
 	Args     []string
 	Started  bool
+	stdin    io.WriteCloser
 	startErr chan error
 	exited   chan error
 	cmder    *exec.Cmd
@@ -37,23 +39,24 @@ func (pm *ProcessMgr) Start() error {
 
 func (pm *ProcessMgr) run() {
 	pm.cmder = exec.Command(pm.Path, pm.Args...)
-	err := pm.cmder.Start()
+	var err error
+	pm.stdin, err = pm.cmder.StdinPipe()
+	if err != nil {
+		pm.startErr <- err
+		return
+	}
+	err = pm.cmder.Start()
 	pm.startErr <- err
 	pm.Started = true
 	pm.exited <- pm.cmder.Wait()
 }
 
 func (pm *ProcessMgr) End() error {
-	if pm.cmder == nil {
+	if pm.cmder == nil || pm.stdin == nil {
 		return nil
 	}
-	//err := pm.cmder.Process.Signal(syscall.SIGTERM)
-	stdin, err := pm.cmder.StdinPipe()
-	if err != nil {
-		return err
-	}
-	defer stdin.Close()
+	defer pm.stdin.Close()
 
-	_, err = stdin.Write([]byte("exit\n"))
+	_, err := pm.stdin.Write([]byte("exit\n"))
 	return err
 }
