@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"os/exec"
-	"syscall"
 )
 
 type ProcessMgr struct {
@@ -48,6 +47,13 @@ func (pm *ProcessMgr) End() error {
 	if pm.cmder == nil {
 		return nil
 	}
-	err := pm.cmder.Process.Signal(syscall.SIGTERM)
+	//err := pm.cmder.Process.Signal(syscall.SIGTERM)
+	stdin, err := pm.cmder.StdinPipe()
+	if err != nil {
+		return err
+	}
+	defer stdin.Close()
+
+	_, err = stdin.Write([]byte("exit\n"))
 	return err
 }

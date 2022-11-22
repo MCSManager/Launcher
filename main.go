@@ -50,7 +50,7 @@ func main() {
 	// exitTipLabel.SetColor(&color.RGBA{1, 2, 3, 200})
 
 	//守护进程管理
-	daemon := cmd.NewProcessMgr("ping", "www.baidu.com")
+	daemon := cmd.NewProcessMgr("./out/test")
 
 	operationButton := widget.NewButton("启动后台程序", nil)
 	// btnColor := canvas.NewRectangle(utils.BLUE)
