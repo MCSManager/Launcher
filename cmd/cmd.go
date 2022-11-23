@@ -25,8 +25,8 @@ func (pm *ProcessMgr) ListenStop(callback func(err error)) {
 		for {
 			select {
 			case err := <-pm.exited:
-				callback(err)
 				pm.Started = false
+				callback(err)
 			}
 		}
 	}()
