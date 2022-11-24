@@ -6,7 +6,11 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"strconv"
 	"syscall"
+	"time"
+
+	"mcsmanager.com/desktop-app/utils"
 )
 
 type ProcessMgr struct {
@@ -66,7 +70,25 @@ func (pm *ProcessMgr) End() error {
 		return nil
 	}
 	defer pm.stdin.Close()
-
 	_, err := pm.stdin.Write([]byte("exit\n"))
+	pm.ExitCheck()
 	return err
+}
+
+func (pm *ProcessMgr) ExitCheck() {
+	go func() {
+		fmt.Println("Exit check enable..")
+		time.Sleep(5 * time.Second)
+		fmt.Printf("Program kill %v", pm.Started)
+		if pm.Started {
+			pid := pm.cmder.Process.Pid
+			utils.WriteErrLog(fmt.Sprintf("Kill Program: taskkill /PID %d /T /F", pid))
+			cmder := exec.Command("taskkill", "/PID", strconv.Itoa(pid), "/T", "/F")
+			cmder.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+			err := cmder.Run()
+			if err != nil {
+				utils.WriteErrLog(fmt.Sprintf("Kill command Err: %s", err))
+			}
+		}
+	}()
 }

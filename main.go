@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"fyne.io/fyne/v2/dialog"
 	"image/color"
 	"os"
+
+	"fyne.io/fyne/v2/dialog"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -55,16 +56,16 @@ func main() {
 
 	//监听程序运行状态
 	daemon.ListenStop(func(err error) {
+		fmt.Println("EVENT: daemon exit!")
 		if web.Started {
 			web.End()
 		}
-		fmt.Println("daemon exit event!")
 		operationButton.SetText("启动后台程序")
 		statusLabel.SetText(STOPPED_TEXT)
 		statusLabel.SetColor(color.Black)
 	})
 	web.ListenStop(func(err error) {
-		fmt.Println("web exit event!")
+		fmt.Println("EVENT: web exit!")
 		if daemon.Started {
 			daemon.End()
 		}
