@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"fyne.io/fyne/v2/dialog"
 	"image/color"
 	"os"
+
+	"fyne.io/fyne/v2/dialog"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -27,8 +28,9 @@ func main() {
 
 	app := app.New()
 	window := app.NewWindow("MCSManager Launcher")
-
 	window.Resize(fyne.Size{Width: 320, Height: 260})
+	window.SetFullScreen(false)
+	window.SetFixedSize(true)
 
 	statusLabel := uiw.NewMyLabel(STOPPED_TEXT)
 	statusLabel.SetFontSize(12)
@@ -41,7 +43,9 @@ func main() {
 		operationButton,
 	)
 	openBrowser := widget.NewButton("访问面板", func() {
-		fmt.Println("打开浏览器")
+		if err := utils.Open("http://localhost:23333"); err != nil {
+			fmt.Printf("Open Browser err %v\n", err)
+		}
 	})
 
 	//守护进程管理
@@ -53,13 +57,13 @@ func main() {
 		if web.Started {
 			web.End()
 		}
-		println("daemon exit event!")
+		fmt.Println("daemon exit event!")
 		operationButton.SetText("启动后台程序")
 		statusLabel.SetText(STOPPED_TEXT)
 		statusLabel.SetColor(color.Black)
 	})
 	web.ListenStop(func(err error) {
-		println("web exit event!")
+		fmt.Println("web exit event!")
 		if daemon.Started {
 			daemon.End()
 		}
@@ -98,8 +102,10 @@ func main() {
 	window.SetCloseIntercept(func() {
 		dialog.ShowConfirm("警告", "确定要退出程序吗？", func(b bool) {
 			if b {
-				daemon.End()
-				web.End()
+				if daemon.Started {
+					dialog.ShowInformation("错误", "您必须关闭后台程序才能关闭本窗口", window)
+					return
+				}
 				os.Exit(0)
 			}
 		}, window)
