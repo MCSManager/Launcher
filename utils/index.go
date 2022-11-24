@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"syscall"
 )
 
 var commands = map[string]string{
@@ -30,15 +31,12 @@ func WriteErrLog(err string) {
 	os.WriteFile(ERR_LOG_PATH, []byte(err), 0744)
 }
 
-// Open calls the OS default program for uri
 func Open(uri string) error {
-	//run, ok := commands[runtime.GOOS]
-	//if !ok {
-	//return fmt.Errorf("don't know how to open things on %s platform", runtime.GOOS)
-	//}
-
 	if runtime.GOOS == "windows" {
 		cmd := exec.Command("cmd.exe", "/c", "start", uri)
+		if runtime.GOOS == "windows" {
+			cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+		}
 		return cmd.Start()
 	}
 	return errors.New("not support")
