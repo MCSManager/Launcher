@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"image/color"
 	"os"
@@ -17,13 +18,22 @@ import (
 	"mcsmanager.com/desktop-app/utils"
 )
 
+type WebConfig struct {
+	HttpPort int `json:"httpPort"`
+}
+
 func main() {
+
+	var webConfig WebConfig
 
 	STOPPED_TEXT := "状态: 未运行"
 	STARTED_TEXT := "状态: 正在运行"
 
-	fontPath := "./config/msyh.ttc"
-	os.Setenv("FYNE_FONT", fontPath)
+	if utils.IsFileExists("C:/Windows/Fonts/msyh.ttc") {
+		os.Setenv("FYNE_FONT", "C:/Windows/Fonts/msyh.ttc")
+	} else {
+		os.Setenv("FYNE_FONT", "./config/msyh.ttc")
+	}
 
 	app := app.New()
 	window := app.NewWindow("MCSManager Launcher")
@@ -33,7 +43,8 @@ func main() {
 
 	statusLabel := uiw.NewMyLabel(STOPPED_TEXT)
 	statusLabel.SetFontSize(12)
-	tipLabel := uiw.NewMyLabel("端口: 23333")
+
+	tipLabel := uiw.NewMyLabel("")
 	tipLabel.SetFontSize(12)
 	tipLabelWrapper := container.New(layout.NewHBoxLayout(), tipLabel.Canvas)
 	operationButton := widget.NewButton("启动后台程序", nil)
@@ -41,8 +52,21 @@ func main() {
 		layout.NewMaxLayout(),
 		operationButton,
 	)
+
+	WEB_CONFIG_FILE_PATH := "./mcsmanager/web/data/SystemConfig/config.json"
+	if utils.IsFileExists(WEB_CONFIG_FILE_PATH) {
+		content, err := os.ReadFile(WEB_CONFIG_FILE_PATH)
+		if err != nil {
+			tipLabel.SetText("文件错误：请放置到正确位置")
+		} else {
+			fmt.Printf("Read config: %s\n", string(content))
+			json.Unmarshal(content, &webConfig)
+			tipLabel.SetText(fmt.Sprintf("端口: %d", webConfig.HttpPort))
+		}
+	}
+
 	openBrowser := widget.NewButton("访问面板", func() {
-		if err := utils.Open("http://localhost:23333"); err != nil {
+		if err := utils.Open(fmt.Sprintf("http://localhost:%d/", webConfig.HttpPort)); err != nil {
 			fmt.Printf("Open Browser err %v\n", err)
 		}
 	})
