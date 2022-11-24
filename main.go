@@ -91,14 +91,14 @@ func main() {
 			operationButton.SetText("停止后台程序")
 		} else { //停止
 			operationButton.SetText("停止中...")
-			if err = daemon.End(); err != nil {
+			if err = web.End(); err != nil {
 				utils.WriteErrLog(fmt.Sprintf("Stop daemon error:%s", err.Error()))
 				return
 			}
 		}
 	}
 
-	infoLabel := uiw.NewMyLabel("MCSManager 面板启动器")
+	infoLabel := uiw.NewMyLabel("MCSManager 管理面板启动器")
 	infoLabel.SetFontSize(12)
 
 	window.SetCloseIntercept(func() {

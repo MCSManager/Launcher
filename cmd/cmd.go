@@ -77,12 +77,11 @@ func (pm *ProcessMgr) End() error {
 
 func (pm *ProcessMgr) ExitCheck() {
 	go func() {
-		fmt.Println("Exit check enable..")
-		time.Sleep(5 * time.Second)
-		fmt.Printf("Program kill %v", pm.Started)
+		time.Sleep(6 * time.Second)
+		fmt.Printf("Program kill, Status: %v", pm.Started)
 		if pm.Started {
 			pid := pm.cmder.Process.Pid
-			utils.WriteErrLog(fmt.Sprintf("Kill Program: taskkill /PID %d /T /F", pid))
+			fmt.Printf("Kill Program: taskkill /PID %d /T /F\n", pid)
 			cmder := exec.Command("taskkill", "/PID", strconv.Itoa(pid), "/T", "/F")
 			cmder.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 			err := cmder.Run()
