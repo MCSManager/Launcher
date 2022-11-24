@@ -2,10 +2,9 @@ package main
 
 import (
 	"fmt"
+	"fyne.io/fyne/v2/dialog"
 	"image/color"
 	"os"
-
-	"fyne.io/fyne/v2/dialog"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -17,7 +16,6 @@ import (
 	"mcsmanager.com/desktop-app/utils"
 )
 
-// go build -ldflags -H=windowsgui .
 func main() {
 
 	STOPPED_TEXT := "状态: 未运行"
@@ -49,8 +47,11 @@ func main() {
 	})
 
 	//守护进程管理
-	daemon := cmd.NewProcessMgr("bash")
-	web := cmd.NewProcessMgr("bash")
+	pwd, _ := os.Getwd()
+	fmt.Println("开始工作目录", pwd)
+	// 程序所在目录
+	daemon := cmd.NewProcessMgr(pwd+"/mcsmanager/daemon/", "./node_app.exe", "app.js")
+	web := cmd.NewProcessMgr(pwd+"/mcsmanager/web/", "./node_app.exe", "app.js")
 
 	//监听程序运行状态
 	daemon.ListenStop(func(err error) {
