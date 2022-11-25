@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"mcsmanager.com/desktop-app/utils"
+	"github.com/MCSManager/Launcher/utils"
 )
 
 type ProcessMgr struct {

@@ -1,4 +1,4 @@
-module mcsmanager.com/desktop-app
+module github.com/MCSManager/Launcher
 
 go 1.19
 

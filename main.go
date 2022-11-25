@@ -13,9 +13,9 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
-	"mcsmanager.com/desktop-app/cmd"
-	"mcsmanager.com/desktop-app/uiw"
-	"mcsmanager.com/desktop-app/utils"
+	"github.com/MCSManager/Launcher/cmd"
+	"github.com/MCSManager/Launcher/uiw"
+	"github.com/MCSManager/Launcher/utils"
 )
 
 type WebConfig struct {
@@ -76,7 +76,7 @@ func main() {
 
 	//守护进程管理
 	pwd, _ := os.Getwd()
-	fmt.Println("开始工作目录", pwd)
+	fmt.Println("CWD:", pwd)
 	// 程序所在目录
 	daemon := cmd.NewProcessMgr(pwd+"/mcsmanager/daemon/", "./node_app.exe", "app.js")
 	web := cmd.NewProcessMgr(pwd+"/mcsmanager/web/", "./node_app.exe", "app.js")
