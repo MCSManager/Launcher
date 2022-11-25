@@ -41,6 +41,9 @@ func main() {
 	window.SetFullScreen(false)
 	window.SetFixedSize(true)
 
+	infoLabel := uiw.NewMyLabel("MCSManager 管理面板启动器")
+	infoLabel.SetFontSize(12)
+
 	statusLabel := uiw.NewMyLabel(STOPPED_TEXT)
 	statusLabel.SetFontSize(12)
 
@@ -84,6 +87,7 @@ func main() {
 		if web.Started {
 			web.End()
 		}
+		operationButton.Enable()
 		operationButton.SetText("启动后台程序")
 		statusLabel.SetText(STOPPED_TEXT)
 		statusLabel.SetColor(color.Black)
@@ -97,8 +101,6 @@ func main() {
 
 	// 启动/关闭按钮点击事件
 	operationButton.OnTapped = func() {
-		operationButton.Disable()
-		defer operationButton.Enable()
 		var err error
 		if !daemon.Started {
 			if err = daemon.Start(); err != nil {
@@ -113,17 +115,15 @@ func main() {
 			statusLabel.SetText(STARTED_TEXT)
 			statusLabel.SetColor(utils.GREEN)
 			operationButton.SetText("停止后台程序")
-		} else { //停止
+		} else {
 			operationButton.SetText("停止中...")
+			operationButton.Disable()
 			if err = web.End(); err != nil {
 				utils.WriteErrLog(fmt.Sprintf("Stop daemon error:%s", err.Error()))
 				return
 			}
 		}
 	}
-
-	infoLabel := uiw.NewMyLabel("MCSManager 管理面板启动器")
-	infoLabel.SetFontSize(12)
 
 	window.SetCloseIntercept(func() {
 		dialog.ShowConfirm("警告", "确定要退出程序吗？", func(b bool) {
