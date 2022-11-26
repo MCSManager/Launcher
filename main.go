@@ -47,7 +47,7 @@ func main() {
 	statusLabel := uiw.NewMyLabel(STOPPED_TEXT)
 	statusLabel.SetFontSize(12)
 
-	tipLabel := uiw.NewMyLabel("")
+	tipLabel := uiw.NewMyLabel("端口: 23333")
 	tipLabel.SetFontSize(12)
 	tipLabelWrapper := container.New(layout.NewHBoxLayout(), tipLabel.Canvas)
 	operationButton := widget.NewButton("启动后台程序", nil)
