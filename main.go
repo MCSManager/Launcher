@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/theme"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -36,6 +37,7 @@ func main() {
 	}
 
 	app := app.New()
+	app.Settings().SetTheme(theme.LightTheme())
 	window := app.NewWindow("MCSManager Launcher")
 	window.Resize(fyne.Size{Width: 320, Height: 260})
 	window.SetFullScreen(false)
@@ -69,7 +71,11 @@ func main() {
 	}
 
 	openBrowser := widget.NewButton("访问面板", func() {
-		if err := utils.Open(fmt.Sprintf("http://localhost:%d/", webConfig.HttpPort)); err != nil {
+		var port = 23333
+		if webConfig.HttpPort > 0 {
+			port = webConfig.HttpPort
+		}
+		if err := utils.Open(fmt.Sprintf("http://localhost:%d/", port)); err != nil {
 			fmt.Printf("Open Browser err %v\n", err)
 		}
 	})
