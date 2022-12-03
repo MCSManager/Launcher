@@ -14,14 +14,15 @@ import (
 )
 
 type ProcessMgr struct {
-	Path     string
-	Args     []string
-	Started  bool
-	stdin    io.WriteCloser
-	startErr chan error
-	exited   chan error
-	cmder    *exec.Cmd
-	Cwd      string
+	Path       string
+	Args       []string
+	Started    bool
+	stdin      io.WriteCloser
+	startErr   chan error
+	exited     chan error
+	cmder      *exec.Cmd
+	Cwd        string
+	StartCount int
 }
 
 func NewProcessMgr(workDir string, path string, args ...string) *ProcessMgr {
@@ -49,6 +50,7 @@ func (pm *ProcessMgr) Start() error {
 func (pm *ProcessMgr) run() {
 	os.Chdir(pm.Cwd)
 	fmt.Printf("Change CWD: %s\n", pm.Cwd)
+	pm.StartCount += 1
 	pm.cmder = exec.Command(pm.Path, pm.Args...)
 	if runtime.GOOS == "windows" {
 		pm.cmder.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
@@ -77,9 +79,10 @@ func (pm *ProcessMgr) End() error {
 
 func (pm *ProcessMgr) ExitCheck() {
 	go func() {
+		tmpStartCount := pm.StartCount
 		time.Sleep(6 * time.Second)
 		fmt.Printf("Program kill, Status: %v", pm.Started)
-		if pm.Started {
+		if pm.Started && pm.StartCount == tmpStartCount {
 			pid := pm.cmder.Process.Pid
 			fmt.Printf("Kill Program: taskkill /PID %d /T /F\n", pid)
 			cmder := exec.Command("taskkill", "/PID", strconv.Itoa(pid), "/T", "/F")
