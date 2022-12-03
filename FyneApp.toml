@@ -3,6 +3,6 @@ Website = "https://mcsmanager.com/"
 [Details]
   Icon = "icon.png"
   Name = "MCSManager-Launcher"
-  ID = "mcsmanager.com"
+  ID = "com.mcsmanager"
   Version = "1.2.0"
-  Build = 5
+  Build = 6
