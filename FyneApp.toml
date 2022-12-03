@@ -5,4 +5,4 @@ Website = "https://mcsmanager.com/"
   Name = "MCSManager-Launcher"
   ID = "mcsmanager.com"
   Version = "1.2.0"
-  Build = 2
+  Build = 3
