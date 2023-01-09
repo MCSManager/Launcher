@@ -3,3 +3,7 @@
 ################################################################################
 
 /.vs/Launcher
+/.vs
+/MCSM Launcher/Launcher/bin
+/MCSM Launcher/Launcher/obj
+/MCSM Launcher/.vs/MCSM Launcher

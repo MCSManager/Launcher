@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+	<PropertyGroup>
+		<TargetFramework>net462</TargetFramework>
+		<UseWPF>true</UseWPF>
+		<OutputType>WinExe</OutputType>
+		<LangVersion>preview</LangVersion>
+		<ApplicationIcon>icon_48X48.ico</ApplicationIcon>
+	</PropertyGroup>
+	<ItemGroup>
+	  <None Remove="icon.ico" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Content Include="icon_48X48.ico" />
+	</ItemGroup>
+	<ItemGroup>
+	  <PackageReference Include="Costura.Fody" Version="5.7.0">
+	    <PrivateAssets>all</PrivateAssets>
+	    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+	  </PackageReference>
+	  <PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="1.1.0" />
+	  <PackageReference Include="ModernWpfUI" Version="10.1.65" />
+	  <PackageReference Include="System.Net.Http.Json" Version="7.0.0" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Resource Include="icon.ico" />
+	</ItemGroup>
+</Project>
