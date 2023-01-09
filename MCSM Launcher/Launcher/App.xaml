@@ -10,10 +10,6 @@
             <ResourceDictionary.MergedDictionaries>
                 <ui:XamlControlsResources />
                 <ui:ThemeResources />
-
-                <ResourceDictionary Source="/ModernWpf;component/DesignTime/SystemColors.xaml" />
-                <ResourceDictionary Source="/ModernWpf;component/ThemeResources/Light.xaml" />
-                <ResourceDictionary Source="/ModernWpf;component/ControlsResources.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

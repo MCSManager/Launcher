@@ -18,43 +18,42 @@
     mc:Ignorable="d">
     <Grid Margin="24">
         <ui:SimpleStackPanel Spacing="8">
-            <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="MCSM Windows Launcher" />
-            <TextBlock Style="{StaticResource SubtitleTextBlockStyle}">
+            <TextBlock
+                FontWeight="Light"
+                Style="{StaticResource TitleTextBlockStyle}"
+                Text="MCSM Windows Launcher" />
+
+        </ui:SimpleStackPanel>
+        <ui:SimpleStackPanel VerticalAlignment="Bottom" Spacing="8">
+            <TextBlock
+                Margin="0,0,0,8"
+                FontWeight="Light"
+                Style="{StaticResource SubtitleTextBlockStyle}">
                 <Run Text="运行状态:" />
                 <Run x:Name="MS_Run_State" Text="" />
+                <LineBreak />
+                <Run Text="版本: 9.7.1" />
                 <LineBreak />
                 <Run Text="端口" />
                 <Run x:Name="MS_Run_Port" Text="" />
             </TextBlock>
-        </ui:SimpleStackPanel>
-        <ui:SimpleStackPanel VerticalAlignment="Bottom" Spacing="8">
-            <ui:ToggleSwitch
-                Margin="12,0,0,0"
-                Header="一个开关"
-                Toggled="ToggleSwitch_Toggled" />
-            <WrapPanel
-                HorizontalAlignment="Left"
-                VerticalAlignment="Bottom"
-                Orientation="Horizontal">
-                <ui:HyperlinkButton Padding="12,8" x:Name="UrltoPanel">
-                    <ui:SimpleStackPanel Orientation="Horizontal" Spacing="8">
-                        <ui:SymbolIcon Symbol="Link" />
-                        <TextBlock Text="进入面板" />
-                    </ui:SimpleStackPanel>
-                </ui:HyperlinkButton>
-                <ui:HyperlinkButton Padding="12,8" PreviewMouseLeftButtonUp="HyperlinkButton_PreviewMouseLeftButtonUp">
-                    <ui:SimpleStackPanel Orientation="Horizontal" Spacing="8">
-                        <ui:SymbolIcon Symbol="Link" />
-                        <TextBlock Text="查看日志" />
-                    </ui:SimpleStackPanel>
-                </ui:HyperlinkButton>
-                <ui:HyperlinkButton Padding="12,8" Click="HyperlinkButton_Click_1">
-                    <ui:SimpleStackPanel Orientation="Horizontal" Spacing="8">
-                        <ui:SymbolIcon Symbol="Link" />
-                        <TextBlock Text="挂入后台" />
-                    </ui:SimpleStackPanel>
-                </ui:HyperlinkButton>
-            </WrapPanel>
+            <Button
+                Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ui:SimpleStackPanel}}"
+                Padding="0,10"
+                Click="Button_Click"
+                Content="开启后台程序"
+                Style="{StaticResource AccentButtonStyle}" />
+            <Button
+                x:Name="WWwww"
+                Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ui:SimpleStackPanel}}"
+                Padding="0,10"
+                Click="Button_Click_1"
+                Content="打开面板" />
+            <Button
+                Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ui:SimpleStackPanel}}"
+                Padding="0,10"
+                Click="HyperlinkButton_Click_1"
+                Content="查看后台日志" />
         </ui:SimpleStackPanel>
 
     </Grid>

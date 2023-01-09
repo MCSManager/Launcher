@@ -19,6 +19,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 
 
+
 namespace Launcher
 {
     /// <summary>
@@ -39,19 +40,17 @@ namespace Launcher
 
         protected override async void OnInitialized(EventArgs e)
         {
-            string file = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "mcsmanager", "web", "data", "SystemConfig", "config.json");
-            if (!File.Exists(file))
+            string file = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "mcsmanager","web","data", "SystemConfig","config.json");
+            if (File.Exists(file))
             {
-                MessageBox.Show("运行库不完整,请重新下载","MCSM Launcher",MessageBoxButton.OK,MessageBoxImage.Error);
-                App.Current.Shutdown();
-                
-            }
-            using var reader = new StreamReader(file);
-            var node = JsonNode.Parse(await reader.ReadToEndAsync());
-            MS_Run_State.Text = "关闭";
-            MS_Run_Port.Text = node["httpPort"].ToString();
-            UrltoPanel.NavigateUri = new($"http://localhost:{node["httpPort"]}");
+                using var reader = new StreamReader(file);
+                var node = JsonNode.Parse(await reader.ReadToEndAsync());
 
+                MS_Run_Port.Text = node["httpPort"].ToString();
+                WWwww.Tag = $"http://localhost:{node["httpPort"]}";
+            }
+
+            MS_Run_State.Text = "关闭";
 
             var menui1 = new MenuItem() { Header = "退出" };
             menui1.Click += (sender, args) =>
@@ -86,68 +85,11 @@ namespace Launcher
             Visibility = Visibility.Hidden;
         }
 
-        private void ToggleSwitch_Toggled(object sender, RoutedEventArgs e)
-        {
-            if (sender is ToggleSwitch toggle)
-            {
-                
-                string file = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "mcsmanager", "node_app.exe");
-                if (toggle.IsOn)
-                {
-                    var p1 = Process.Start(new ProcessStartInfo(file, $"\"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "mcsmanager", "daemon", "app.js")}\"")
-                    {
-                        CreateNoWindow = true,
-                        UseShellExecute = false,
-                        WorkingDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "mcsmanager","daemon")
-                    });
-                    var p2 = Process.Start(new ProcessStartInfo(file, $"\"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "mcsmanager", "web", "app.js")}\"")
-                    {
-                        CreateNoWindow = true,
-                        UseShellExecute = false,
-                        WorkingDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "mcsmanager", "web")
-                    });
-                    p1.EnableRaisingEvents = p2.EnableRaisingEvents = true;
-                    if (!p1.HasExited && !p2.HasExited)
-                    {
-                        processes.Add(p1);
-                        processes.Add(p2);
-                        p1.Exited += OnExited;
-                        p2.Exited += OnExited;
-                        void OnExited(object sender,EventArgs e)
-                        {
-                            App.Current.Dispatcher.Invoke(() => MS_Run_State.Text = "关闭");
-                            if (!p1.HasExited) p1.Kill();
-                            if (!p2.HasExited) p2.Kill();
-                            processes.Clear();
-                        };
-                        MS_Run_State.Text = "开启";
-                        return;
-                    }
-                    if (!p1.HasExited) p1.Kill();
-                    if (!p2.HasExited) p2.Kill();
-                    
 
-                }
-                else
-                {
-
-                    processes.ForEach(process =>
-                    {
-                        if (!process.HasExited) process.Kill();
-                    });
-                    MS_Run_State.Text = "关闭";
-                }
-            }
-        }
 
 
 
         private void HyperlinkButton_Click_1(object sender, RoutedEventArgs e)
-        {
-            Visibility = Visibility.Hidden;
-        }
-
-        private void HyperlinkButton_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             try
             {
@@ -159,6 +101,87 @@ namespace Launcher
                 Process.Start(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "mcsmanager", "web", "logs", "current.log"));
             }
             catch { }
+        }
+
+
+
+        private static bool State { get; set; }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            var button = (sender as Button);
+            if (!State)
+            {
+                string daemonPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "mcsmanager", "daemon");
+                string webPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "mcsmanager", "web");
+                var p1 = Process.Start(new ProcessStartInfo(Path.Combine(daemonPath, "node_app.exe"), $"\"{Path.Combine(daemonPath, "app.js")}\"")
+                {
+                    CreateNoWindow = true,
+                    UseShellExecute = false,
+                    WorkingDirectory = daemonPath
+                });
+                var p2 = Process.Start(new ProcessStartInfo(Path.Combine(webPath, "node_app.exe"), $"\"{Path.Combine(webPath, "app.js")}\"")
+                {
+                    CreateNoWindow = true,
+                    UseShellExecute = false,
+                    WorkingDirectory = webPath,
+                });
+                p1.EnableRaisingEvents = p2.EnableRaisingEvents = true;
+                if (!p1.HasExited && !p2.HasExited)
+                {
+                    processes.Add(p1);
+                    processes.Add(p2);
+                    p1.Exited += (s, e) => 
+                    {
+                        State = false;
+                        App.Current.Dispatcher.Invoke(() =>
+                        {
+                            button.Content = "开启后台程序";
+                        });
+                        if (!p1.HasExited) p1.Kill();
+                        if (!p2.HasExited) p2.Kill();
+                        processes.Clear();
+                    };
+                    p2.Exited += (s, e) =>
+                    {
+                        State = false;
+                        App.Current.Dispatcher.Invoke(() =>
+                        {
+                            button.Content = "开启后台程序";
+                        });
+                        if (!p1.HasExited) p1.Kill();
+                        if (!p2.HasExited) p2.Kill();
+                        processes.Clear();
+                    };
+                    button.Content = "关闭后台程序";
+                    State = true;
+                    MS_Run_State.Text = "开启";
+                    return;
+                }
+                button.Content = "关闭后台程序";
+                State = true;
+                if (!p1.HasExited) p1.Kill();
+                if (!p2.HasExited) p2.Kill();
+            }
+            else
+            {
+                processes.ToList().ForEach(process =>
+                {
+                    process.EnableRaisingEvents = false;
+                    if (!process.HasExited) process.Kill();
+                });
+                MS_Run_State.Text = "关闭";
+                State = false;
+                button.Content = "开启后台程序";
+            }
+
+        }
+
+
+
+        private void Button_Click_1(object sender, RoutedEventArgs e)
+        {
+            Process.Start((sender as Button).Tag.ToString());
         }
     }
 }
