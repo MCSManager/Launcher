@@ -1,8 +1,0 @@
-Website = "https://mcsmanager.com/"
-
-[Details]
-  Icon = "icon.png"
-  Name = "MCSManager-Launcher"
-  ID = "com.mcsmanager"
-  Version = "1.2.0"
-  Build = 6
