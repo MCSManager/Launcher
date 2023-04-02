@@ -4,11 +4,11 @@ This tool allows you to quickly start and shut down the MCSManager process on wi
 
 Currently, only Chinese is supported.
 
-development...
-
+UI Made by [ModernWpf](https://github.com/wherewhere/ModernWpf/),FluentDesign. 
 
 ### Build
 
-```
-go build -ldflags -H=windowsgui .
-```
+You need:
+
+- Visual Studio
+- dotnet runtime Framework 4.6.2
