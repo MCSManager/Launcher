@@ -14,20 +14,24 @@
     MaxWidth="325"
     MaxHeight="500"
     ui:WindowHelper.UseModernWindowStyle="True"
-    ResizeMode="NoResize"
+    ui:WindowHelper.SystemBackdropType="Tabbed"
+    ui:TitleBar.ExtendViewIntoTitleBar="True"
+    ResizeMode="CanMinimize"
     mc:Ignorable="d">
-    <Grid Margin="24">
+    <Grid Margin="24,48,24,24">
         <ui:SimpleStackPanel Spacing="8">
             <TextBlock
-                FontWeight="Light"
                 Style="{StaticResource TitleTextBlockStyle}"
-                Text="MCSM Windows Launcher" />
-
+                Text="MCSManager   Windows Launcher" />
+            <TextBlock
+                Style="{StaticResource BodyTextBlockStyle}"
+                Foreground="{StaticResource SystemControlForegroundBaseMediumBrush}"
+                Text="本应用关闭后会挂至后台，可以从托盘图标单击显示本窗口。" />
         </ui:SimpleStackPanel>
         <ui:SimpleStackPanel VerticalAlignment="Bottom" Spacing="8">
             <TextBlock
                 Margin="0,0,0,8"
-                FontWeight="Light"
+                FontSize="16"
                 Style="{StaticResource SubtitleTextBlockStyle}">
                 <Run Text="运行状态:" />
                 <Run x:Name="MS_Run_State" Text="" />

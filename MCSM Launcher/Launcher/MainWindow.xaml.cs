@@ -49,6 +49,14 @@ namespace Launcher
                 MS_Run_Port.Text = node["httpPort"].ToString();
                 WWwww.Tag = $"http://localhost:{node["httpPort"]}";
             }
+            else
+            {
+#if !DEBUG
+                MessageBox.Show("找不到配置文件，试试以管理员权限打开启动器  / 重新下载。", "LauncehrWrapper", MessageBoxButton.OK, MessageBoxImage.Hand);
+                Environment.Exit(0);
+                return;
+#endif
+            }
 
             MS_Run_State.Text = "关闭";
 
@@ -105,8 +113,16 @@ namespace Launcher
 
 
 
+        /// <summary>
+        /// 状态
+        /// </summary>
         private static bool State { get; set; }
 
+        /// <summary>
+        /// 启动
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void Button_Click(object sender, RoutedEventArgs e)
         {
             var button = (sender as Button);
@@ -178,10 +194,20 @@ namespace Launcher
         }
 
 
-
+        /// <summary>
+        /// 打开面板连接
+        /// </summary>
         private void Button_Click_1(object sender, RoutedEventArgs e)
         {
-            Process.Start((sender as Button).Tag.ToString());
+            try
+            {
+                Process.Start((sender as Button).Tag.ToString());
+            }
+            catch
+            {
+                MessageBox.Show("貌似没有读到配置呢，试试重新打开启动器。", "LauncehrWrapper", MessageBoxButton.OK, MessageBoxImage.Hand);
+            }
+            
         }
     }
 }

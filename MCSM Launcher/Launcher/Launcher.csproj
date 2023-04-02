@@ -18,7 +18,7 @@
 	    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 	  </PackageReference>
 	  <PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="1.1.0" />
-	  <PackageReference Include="ModernWpfUI" Version="10.1.65" />
+	  <PackageReference Include="ModernWpfUI" Version="10.1.85" />
 	  <PackageReference Include="System.Net.Http.Json" Version="7.0.0" />
 	</ItemGroup>
 	<ItemGroup>
