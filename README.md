@@ -4,8 +4,6 @@ This tool allows you to quickly start and shut down the MCSManager process on wi
 
 Currently, only Chinese is supported.
 
-development...
-
 
 ### Build
 
