@@ -2,7 +2,7 @@
   "WelcomeTip": "欢迎使用 MCSManager 面板",
   "PleaseInput": "你可以根据提示输入对应的命令，按回车键生效：",
   "helpTemplate": "输入 {{.Name}} 显示 {{.Info}} ",
-  "HelpList": "输入 h 显示帮助消息\n输入 1 启动面板后台程序\n输入 2 停止面板后台程序\n输入 3 访问面板\n输入 4 查看高级功能选项\n输入 5 退出程序",
+  "HelpList": "输入 h 显示帮助消息\n输入 1 访问面板\n输入 2 启动面板后台程序\n输入 3 停止面板后台程序\n输入 4 查看高级功能选项\n输入 5 退出程序",
   "PanelStatus": "面板运行状态：",
   "PanelStatusDetail": "网页端：{{.Web}} 守护进程端：{{.Daemon}}",
   "running": "正在运行",

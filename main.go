@@ -4,10 +4,14 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"sync"
 
 	"github.com/MCSManager/Launcher/lang"
 	"github.com/fatih/color"
 )
+
+var webProcess *ProcessMgr
+var daemonProcess *ProcessMgr
 
 func main() {
 
@@ -56,38 +60,74 @@ func onCommand(cmd string) {
 		println("成功！")
 		return
 	}
+	if cmd == "2" {
+		go startPanel()
+		return
+	}
+	if cmd == "3" {
+		go stopPanel()
+		return
+	}
 
 }
 
-func startWebProcess() {
-	startPanelProcess("bash")
+func stopPanel() {
+	if webProcess != nil && daemonProcess != nil {
+		webProcess.End()
+		daemonProcess.End()
+		return
+	}
+	fmt.Println("The Panel is not running")
 }
 
-// func startDaemonProcess(cmd string) {
-// 	startPanelProcess("bash")
-// }
+func startPanel() {
 
-func startPanelProcess(cmd string) {
-	process := NewProcessMgr("/", cmd, "exit")
+	webProcess = startPanelProcess("ping", "www.baidu.com")
+	daemonProcess = startPanelProcess("ping", "www.google.com")
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		<-daemonProcess.ExitEvent
+		webProcess.End()
+		wg.Done()
+	}()
+	go func() {
+		<-webProcess.ExitEvent
+		daemonProcess.End()
+		wg.Done()
+	}()
+
+	wg.Wait()
+	webProcess = nil
+	daemonProcess = nil
+}
+
+func startPanelProcess(cmd string, args ...string) *ProcessMgr {
+	process := NewProcessMgr("/", cmd, "exit", args...)
 	process.Start()
 
 	go func() {
 		for {
-			out := <-process.StdoutEvent
-			fmt.Print("stdout: ", out)
+			out, ok := <-process.StdoutEvent
+			if !ok {
+				break
+			}
+			fmt.Print(out)
 		}
 	}()
 
 	go func() {
 		for {
-			out := <-process.IoErrEvent
-			fmt.Print("IoErrEvent: ", out)
+			out, ok := <-process.ErrEvent
+			if !ok {
+				break
+			}
+			fmt.Println("错误: ", out)
 		}
 	}()
 
-	<-process.StartedEvent
-	process.StdinEvent <- "ping www.baidu.com\n"
+	ok := <-process.StartedEvent
+	fmt.Println("启进程结果如下：", ok)
 
-	err := <-process.ErrEvent
-	fmt.Println("有错误：", err)
+	return process
 }

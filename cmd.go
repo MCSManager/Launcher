@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -28,6 +29,7 @@ type ProcessMgr struct {
 	stdout io.ReadCloser
 	stderr io.ReadCloser
 	cmder  *exec.Cmd
+	wg     *sync.WaitGroup
 }
 
 func NewProcessMgr(workDir string, path string, stopCommand string, args ...string) *ProcessMgr {
@@ -42,6 +44,7 @@ func NewProcessMgr(workDir string, path string, stopCommand string, args ...stri
 		ErrEvent:     make(chan error),
 		StartedEvent: make(chan error),
 		StopCommand:  stopCommand,
+		wg:           &sync.WaitGroup{},
 	}
 }
 
@@ -51,7 +54,7 @@ func (pm *ProcessMgr) Start() {
 
 func (pm *ProcessMgr) run() {
 	os.Chdir(pm.Cwd)
-	fmt.Printf("Change CWD: %s %s\n", pm.Cwd, pm.Path)
+	fmt.Printf("启动程序: %s %s %v\n", pm.Cwd, pm.Path, pm.Args)
 	pm.StartCount += 1
 	pm.cmder = exec.Command(pm.Path, pm.Args...)
 	// if runtime.GOOS == "windows" {
@@ -61,73 +64,81 @@ func (pm *ProcessMgr) run() {
 	pm.stdin, err = pm.cmder.StdinPipe()
 	if err != nil {
 		pm.ErrEvent <- err
+		pm.close()
+		return
 	}
 	pm.stdout, err = pm.cmder.StdoutPipe()
 	if err != nil {
 		pm.ErrEvent <- err
+		pm.close()
+		return
 	}
 
 	pm.stderr, err = pm.cmder.StderrPipe()
 	if err != nil {
 		pm.ErrEvent <- err
+		pm.close()
+		return
 	}
 
 	err = pm.cmder.Start()
-	println("start", err)
+
 	if err != nil {
 		pm.ErrEvent <- err
+		pm.close()
+		return
 	}
 
-	// Stdout
-	go func() {
-		defer pm.stdout.Close()
-		reader := bufio.NewReader(pm.stdout)
-		for {
-			buf := make([]byte, 512)
-			n, err := reader.Read(buf)
-			if err != nil {
-				if err == io.EOF {
-					break
-				} else {
-					pm.IoErrEvent <- err
-				}
-			}
-			pm.StdoutEvent <- string(string(buf[:n]))
-		}
-	}()
+	pm.StartedEvent <- nil
 
-	// Stderr
-	go func() {
-		defer pm.stderr.Close()
-		reader := bufio.NewReader(pm.stderr)
-		for {
-			buf := make([]byte, 512)
-			n, err := reader.Read(buf)
-			if err != nil {
-				if err == io.EOF {
-					break
-				} else {
-					pm.IoErrEvent <- err
-				}
-			}
-			pm.StdoutEvent <- string(buf[:n])
-		}
-	}()
+	// Stdout and Stderr
+	pm.wg.Add(2)
+	go pm.readStream(pm.stdout)
+	go pm.readStream(pm.stderr)
 
 	// Stdin
 	go func() {
 		defer pm.stdin.Close()
 		for {
-			input := <-pm.StdinEvent
+			input, ok := <-pm.StdinEvent
+			if !ok {
+				break
+			}
 			io.WriteString(pm.stdin, input)
 		}
 	}()
 
 	pm.Started = true
-	println("启动成功")
-	pm.StartedEvent <- nil
+	println("进程完全启动成功")
 	pm.ExitEvent <- pm.cmder.Wait()
 	pm.Started = false
+	pm.wg.Wait()
+	pm.close()
+	println("进程完全退出成功")
+}
+
+func (pm *ProcessMgr) readStream(stream io.ReadCloser) {
+
+	reader := bufio.NewReader(stream)
+	for {
+		buf := make([]byte, 512)
+		n, err := reader.Read(buf)
+		if err != nil || err == io.EOF {
+			break
+		}
+		pm.StdoutEvent <- string(buf[:n])
+	}
+	defer stream.Close()
+	defer pm.wg.Done()
+}
+
+func (pm *ProcessMgr) close() {
+	close(pm.StartedEvent)
+	close(pm.ExitEvent)
+	close(pm.StdinEvent)
+	close(pm.ErrEvent)
+	close(pm.IoErrEvent)
+	close(pm.StdoutEvent)
 }
 
 func (pm *ProcessMgr) End() error {
@@ -144,16 +155,12 @@ func (pm *ProcessMgr) End() error {
 func (pm *ProcessMgr) ExitCheck() {
 	go func() {
 		tmpStartCount := pm.StartCount
-		time.Sleep(6 * time.Second)
-		fmt.Printf("Program kill, Status: %v", pm.Started)
+		time.Sleep(1 * time.Second)
 		if pm.Started && pm.StartCount == tmpStartCount {
 			pid := pm.cmder.Process.Pid
-			fmt.Printf("Kill Program: taskkill /PID %d /T /F\n", pid)
+			// Only Windows support taskkill
 			cmder := exec.Command("taskkill", "/PID", strconv.Itoa(pid), "/T", "/F")
-			// cmder.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-			err := cmder.Run()
-			if err != nil {
-			}
+			cmder.Run()
 		}
 	}()
 }
