@@ -8,7 +8,6 @@ import (
 	"os/exec"
 	"strconv"
 	"sync"
-	"time"
 )
 
 type ProcessMgr struct {
@@ -155,7 +154,6 @@ func (pm *ProcessMgr) End() error {
 func (pm *ProcessMgr) ExitCheck() {
 	go func() {
 		tmpStartCount := pm.StartCount
-		time.Sleep(1 * time.Second)
 		if pm.Started && pm.StartCount == tmpStartCount {
 			pid := pm.cmder.Process.Pid
 			// Only Windows support taskkill
