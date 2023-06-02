@@ -2,12 +2,12 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"strconv"
 	"sync"
+	"time"
 )
 
 type ProcessMgr struct {
@@ -23,6 +23,7 @@ type ProcessMgr struct {
 	Cwd          string
 	StartCount   int
 	StopCommand  string
+	IsOpenStdout bool
 
 	stdin  io.WriteCloser
 	stdout io.ReadCloser
@@ -53,7 +54,6 @@ func (pm *ProcessMgr) Start() {
 
 func (pm *ProcessMgr) run() {
 	os.Chdir(pm.Cwd)
-	fmt.Printf("启动程序: %s %s %v\n", pm.Cwd, pm.Path, pm.Args)
 	pm.StartCount += 1
 	pm.cmder = exec.Command(pm.Path, pm.Args...)
 	// if runtime.GOOS == "windows" {
@@ -108,16 +108,13 @@ func (pm *ProcessMgr) run() {
 	}()
 
 	pm.Started = true
-	println("进程完全启动成功")
 	pm.ExitEvent <- pm.cmder.Wait()
 	pm.Started = false
 	pm.wg.Wait()
 	pm.close()
-	println("进程完全退出成功")
 }
 
 func (pm *ProcessMgr) readStream(stream io.ReadCloser) {
-
 	reader := bufio.NewReader(stream)
 	for {
 		buf := make([]byte, 512)
@@ -125,7 +122,9 @@ func (pm *ProcessMgr) readStream(stream io.ReadCloser) {
 		if err != nil || err == io.EOF {
 			break
 		}
-		pm.StdoutEvent <- string(buf[:n])
+		if pm.IsOpenStdout {
+			pm.StdoutEvent <- string(buf[:n])
+		}
 	}
 	defer stream.Close()
 	defer pm.wg.Done()
@@ -147,18 +146,19 @@ func (pm *ProcessMgr) End() error {
 	defer pm.stdin.Close()
 	defer pm.stdout.Close()
 	_, err := pm.stdin.Write([]byte(pm.StopCommand + "\n"))
-	pm.ExitCheck()
+
+	go pm.ExitCheck()
 	return err
 }
 
-func (pm *ProcessMgr) ExitCheck() {
-	go func() {
-		tmpStartCount := pm.StartCount
-		if pm.Started && pm.StartCount == tmpStartCount {
-			pid := pm.cmder.Process.Pid
-			// Only Windows support taskkill
-			cmder := exec.Command("taskkill", "/PID", strconv.Itoa(pid), "/T", "/F")
-			cmder.Run()
-		}
-	}()
+func (pm *ProcessMgr) ExitCheck() error {
+	time.Sleep(3 * time.Second)
+	tmpStartCount := pm.StartCount
+	if pm.Started && pm.StartCount == tmpStartCount {
+		pid := pm.cmder.Process.Pid
+		// Only Windows support taskkill
+		cmder := exec.Command("taskkill", "/PID", strconv.Itoa(pid), "/T", "/F")
+		return cmder.Run()
+	}
+	return nil
 }

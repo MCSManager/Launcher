@@ -21,13 +21,13 @@ func main() {
 	scanner := bufio.NewScanner(os.Stdin)
 
 	for {
-		fmt.Print("> ")
+
 		if !scanner.Scan() {
 			break
 		}
 		command := scanner.Text()
 		onCommand(command)
-		fmt.Println()
+
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -36,18 +36,26 @@ func main() {
 	}
 }
 
+func printPanelStatus() {
+	fmt.Print(lang.T("PanelStatus"))
+	if webProcess != nil && webProcess.Started {
+		fmt.Println(color.GreenString(lang.T("running")))
+	} else {
+		fmt.Println(color.RedString(lang.T("stopped")))
+	}
+}
+
 func helpInfo() {
 	color.Green(lang.T("WelcomeTip"))
 
 	fmt.Println()
-	fmt.Print(lang.T("PanelStatus"))
-	fmt.Println(color.GreenString(lang.T("running")))
+	printPanelStatus()
 
 	fmt.Println()
 	fmt.Println(lang.T("HelpList"))
 
 	fmt.Println()
-	fmt.Println(color.YellowString(lang.T("PleaseInput")))
+	fmt.Println(color.HiYellowString(lang.T("PleaseInput")))
 
 }
 
@@ -68,22 +76,46 @@ func onCommand(cmd string) {
 		go stopPanel()
 		return
 	}
-
+	if cmd == "4" {
+		fmt.Println(color.HiGreenString(lang.T("AdvancedOptionHelp")))
+		return
+	}
+	if cmd == "p1" {
+		outputSubProcessLog(webProcess)
+		return
+	}
+	if cmd == "p2" {
+		outputSubProcessLog(daemonProcess)
+		return
+	}
+	if cmd == "e" {
+		stopPanel()
+		os.Exit(0)
+		return
+	}
+	fmt.Println(color.HiYellowString(lang.T("UnknownCommand")))
 }
 
 func stopPanel() {
 	if webProcess != nil && daemonProcess != nil {
 		webProcess.End()
 		daemonProcess.End()
+		fmt.Println(color.GreenString(lang.T("CommandSendSuccess")))
 		return
 	}
-	fmt.Println("The Panel is not running")
+	fmt.Println(color.HiYellowString(lang.T("NotRunning")))
 }
 
 func startPanel() {
 
+	if daemonProcess != nil || webProcess != nil {
+		println(color.HiYellowString(lang.T("NotStopped")))
+		return
+	}
+
 	webProcess = startPanelProcess("ping", "www.baidu.com")
 	daemonProcess = startPanelProcess("ping", "www.google.com")
+
 	var wg sync.WaitGroup
 	wg.Add(2)
 	go func() {
@@ -97,13 +129,22 @@ func startPanel() {
 		wg.Done()
 	}()
 
+	printPanelStatus()
+
 	wg.Wait()
 	webProcess = nil
 	daemonProcess = nil
 }
 
+func outputSubProcessLog(process *ProcessMgr) {
+	if process == nil {
+		return
+	}
+	process.IsOpenStdout = !process.IsOpenStdout
+}
+
 func startPanelProcess(cmd string, args ...string) *ProcessMgr {
-	process := NewProcessMgr("/", cmd, "exit", args...)
+	process := NewProcessMgr("/", cmd, "exit1", args...)
 	process.Start()
 
 	go func() {
@@ -122,12 +163,10 @@ func startPanelProcess(cmd string, args ...string) *ProcessMgr {
 			if !ok {
 				break
 			}
-			fmt.Println("错误: ", out)
+			fmt.Println(color.RedString("PROCESS ERR: "), out)
 		}
 	}()
 
-	ok := <-process.StartedEvent
-	fmt.Println("启进程结果如下：", ok)
-
+	<-process.StartedEvent
 	return process
 }
