@@ -1,13 +1,13 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"sync"
 
 	"github.com/MCSManager/Launcher/lang"
 	"github.com/fatih/color"
+	"github.com/rivo/tview"
 )
 
 var webProcess *ProcessMgr
@@ -17,23 +17,44 @@ func main() {
 
 	lang.InitTranslations()
 	lang.SetLanguage("zh-CN")
-	helpInfo()
-	scanner := bufio.NewScanner(os.Stdin)
 
-	for {
+	// globalBox := tview.NewBox().SetBorder(true).SetTitle("Hello, world!")
 
-		if !scanner.Scan() {
-			break
-		}
-		command := scanner.Text()
-		onCommand(command)
+	box := tview.NewBox().SetBorder(true).SetTitle("Hello, world!")
 
+	list := tview.NewList().
+		AddItem("Item 1", "Description 1", '1', nil).
+		AddItem("Item 2", "Description 2", '2', nil).
+		AddItem("Item 3", "Description 3", '3', nil)
+	flex2 := tview.NewFlex().SetDirection(tview.FlexColumn).
+		AddItem(list, 0, 1, true).
+		AddItem(tview.NewTextView().SetText("List Example"), 0, 1, false)
+
+	flex := tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(flex2, 0, 1, true).
+		AddItem(box, 0, 2, true)
+
+	if err := tview.NewApplication().SetRoot(flex, true).Run(); err != nil {
+		panic(err)
 	}
 
-	if err := scanner.Err(); err != nil {
-		fmt.Fprintln(os.Stderr, "error:", err)
-		os.Exit(1)
-	}
+	// helpInfo()
+	// scanner := bufio.NewScanner(os.Stdin)
+
+	// for {
+
+	// 	if !scanner.Scan() {
+	// 		break
+	// 	}
+	// 	command := scanner.Text()
+	// 	onCommand(command)
+
+	// }
+
+	// if err := scanner.Err(); err != nil {
+	// 	fmt.Fprintln(os.Stderr, "error:", err)
+	// 	os.Exit(1)
+	// }
 }
 
 func printPanelStatus() {
