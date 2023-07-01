@@ -13,26 +13,42 @@ import (
 var webProcess *ProcessMgr
 var daemonProcess *ProcessMgr
 
+var infoView *tview.TextView
+var operationView *tview.List
+var outputWebView *tview.TextView
+var outputDaemonView *tview.TextView
+
 func main() {
 
 	lang.InitTranslations()
 	lang.SetLanguage("zh-CN")
+	initOperationCommand()
 
 	// globalBox := tview.NewBox().SetBorder(true).SetTitle("Hello, world!")
+	infoView = tview.NewTextView().SetText("欢迎使用 MCSManager 面板")
+	initUIBox(infoView, "运行状态")
 
-	box := tview.NewBox().SetBorder(true).SetTitle("Hello, world!")
+	outputWebView = tview.NewTextView()
+	initUIBox(outputWebView, "Web 日志")
 
-	list := tview.NewList().
-		AddItem("Item 1", "Description 1", '1', nil).
-		AddItem("Item 2", "Description 2", '2', nil).
-		AddItem("Item 3", "Description 3", '3', nil)
+	outputDaemonView = tview.NewTextView()
+	initUIBox(outputDaemonView, "Daemon 日志")
+
+	operationView = tview.NewList()
+	initUIBox(operationView, "操作")
+
+	for _, item := range globalOperationCommand {
+		operationView.AddItem(item.MainText, item.SecondaryText, item.Shortcut, item.Exec)
+	}
+
 	flex2 := tview.NewFlex().SetDirection(tview.FlexColumn).
-		AddItem(list, 0, 1, true).
-		AddItem(tview.NewTextView().SetText("List Example"), 0, 1, false)
+		AddItem(infoView, 0, 1, false).
+		AddItem(operationView, 0, 1, true)
 
 	flex := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(flex2, 0, 1, true).
-		AddItem(box, 0, 2, true)
+		AddItem(outputDaemonView, 0, 1, true).
+		AddItem(outputWebView, 0, 1, true)
 
 	if err := tview.NewApplication().SetRoot(flex, true).Run(); err != nil {
 		panic(err)

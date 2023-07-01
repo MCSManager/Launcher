@@ -11,5 +11,17 @@
   "AdvancedOptionHelp": "高级功能选项：\n输入 p1 显示 Web 程序实时输出\n输入 p2 显示 Daemon 程序实时输出\n",
   "NotRunning": "面板并没有在运行，无法结束！",
   "NotStopped": "面板已经在后台运行中",
-  "CommandSendSuccess": "指令已发出"
+  "CommandSendSuccess": "指令已发出",
+  "TopCommand1": "启动面板",
+  "TopCommand2": "停止面板",
+  "TopCommand3": "访问面板",
+  "TopCommand4": "输出运行日志",
+  "TopCommand5": "使用文档",
+  "TopCommand6": "关闭并推出",
+  "TopCommandSubTitle1": "启动 MCSManager 面板程序",
+  "TopCommandSubTitle2": "停止 MCSManager 面板程序",
+  "TopCommandSubTitle3": "将打开浏览器访问面板",
+  "TopCommandSubTitle4": "显示 MCSManager 程序运行日志",
+  "TopCommandSubTitle5": "访问官方文档",
+  "TopCommandSubTitle6": "退出 MCSManager"
 }
