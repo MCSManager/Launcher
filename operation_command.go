@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/MCSManager/Launcher/lang"
 	"github.com/rivo/tview"
 )
@@ -19,16 +17,16 @@ var globalOperationCommand = []OperationCommand{}
 func initOperationCommand() {
 	globalOperationCommand = []OperationCommand{
 		{MainText: lang.T("TopCommand1"), SecondaryText: lang.T("TopCommandSubTitle1"), Shortcut: '1', Exec: func() {
-			fmt.Println("TopCommand1")
+
 		}},
 		{MainText: lang.T("TopCommand2"), SecondaryText: lang.T("TopCommandSubTitle2"), Shortcut: '2', Exec: func() {
-			fmt.Println("TopCommand2")
+
 		}},
 		{MainText: lang.T("TopCommand3"), SecondaryText: lang.T("TopCommandSubTitle3"), Shortcut: '3', Exec: func() {
-			fmt.Println("TopCommand3")
+
 		}},
 		{MainText: lang.T("TopCommand4"), SecondaryText: lang.T("TopCommandSubTitle4"), Shortcut: '4', Exec: func() {
-			fmt.Println("TopCommand4")
+
 		}},
 		{MainText: lang.T("TopCommand5"), SecondaryText: lang.T("TopCommandSubTitle5"), Shortcut: '5', Exec: func() {
 

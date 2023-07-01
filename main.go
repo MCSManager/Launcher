@@ -54,57 +54,9 @@ func main() {
 		panic(err)
 	}
 
-	// helpInfo()
-	// scanner := bufio.NewScanner(os.Stdin)
-
-	// for {
-
-	// 	if !scanner.Scan() {
-	// 		break
-	// 	}
-	// 	command := scanner.Text()
-	// 	onCommand(command)
-
-	// }
-
-	// if err := scanner.Err(); err != nil {
-	// 	fmt.Fprintln(os.Stderr, "error:", err)
-	// 	os.Exit(1)
-	// }
-}
-
-func printPanelStatus() {
-	fmt.Print(lang.T("PanelStatus"))
-	if webProcess != nil && webProcess.Started {
-		fmt.Println(color.GreenString(lang.T("running")))
-	} else {
-		fmt.Println(color.RedString(lang.T("stopped")))
-	}
-}
-
-func helpInfo() {
-	color.Green(lang.T("WelcomeTip"))
-
-	fmt.Println()
-	printPanelStatus()
-
-	fmt.Println()
-	fmt.Println(lang.T("HelpList"))
-
-	fmt.Println()
-	fmt.Println(color.HiYellowString(lang.T("PleaseInput")))
-
 }
 
 func onCommand(cmd string) {
-	if cmd == "h" {
-		helpInfo()
-		return
-	}
-	if cmd == "1" {
-		println("成功！")
-		return
-	}
 	if cmd == "2" {
 		go startPanel()
 		return
@@ -165,8 +117,6 @@ func startPanel() {
 		daemonProcess.End()
 		wg.Done()
 	}()
-
-	printPanelStatus()
 
 	wg.Wait()
 	webProcess = nil
