@@ -1,3 +1,16 @@
 {
-  "WelcomeTip": "Welcome !"
+  "WelcomeTip": "欢迎使用 MCSManager 面板",
+  "SoftwareInfo":"支持大部分游戏服务端和控制台程序的管理面板",
+  "RunTime":"运行时长：{{.Time}}",
+  "TimeText":"{{.D}} 天 {{.H}} 时 {{.M}} 分 {{.S}} 秒",
+  "ExitTip": "请勿关闭此窗口，如果要关闭面板请输入 c 并回车。",
+  "Address": "浏览器访问 {{.Url}} 即可进入软件。",
+  "PanelStatus": "运行状态：",
+  "PanelStatusDetail": "网页端：{{.Web}} 守护进程端：{{.Daemon}}",
+  "running": "正在运行",
+  "stopped": "未运行",
+  "UnknownCommand": "未知的命令",
+  "NotRunning": "面板并没有在运行，无法结束！",
+  "NotStopped": "面板已经在后台运行中",
+  "CommandSendSuccess": "操作成功！"
 }

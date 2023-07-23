@@ -144,10 +144,3 @@ func startPanel() {
 	webProcess = nil
 	daemonProcess = nil
 }
-
-func outputSubProcessLog(process *ProcessMgr) {
-	if process == nil {
-		return
-	}
-	process.IsOpenStdout = !process.IsOpenStdout
-}

@@ -4,15 +4,13 @@
   "RunTime":"运行时长：{{.Time}}",
   "TimeText":"{{.D}} 天 {{.H}} 时 {{.M}} 分 {{.S}} 秒",
   "ExitTip": "请勿关闭此窗口，如果要关闭面板请输入 c 并回车。",
-  "helpTemplate": "输入 {{.Name}} 显示 {{.Info}} ",
   "Address": "浏览器访问 {{.Url}} 即可进入软件。",
   "PanelStatus": "运行状态：",
   "PanelStatusDetail": "网页端：{{.Web}} 守护进程端：{{.Daemon}}",
   "running": "正在运行",
   "stopped": "未运行",
   "UnknownCommand": "未知的命令",
-  "AdvancedOptionHelp": "高级功能选项：\n输入 p1 显示 Web 程序实时输出\n输入 p2 显示 Daemon 程序实时输出\n",
   "NotRunning": "面板并没有在运行，无法结束！",
   "NotStopped": "面板已经在后台运行中",
-  "CommandSendSuccess": "指令已发出"
+  "CommandSendSuccess": "操作成功！"
 }
