@@ -7,6 +7,7 @@ import (
 
 	"github.com/MCSManager/Launcher/lang"
 	"github.com/fatih/color"
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
@@ -19,6 +20,8 @@ var outputWebView *tview.TextView
 var outputDaemonView *tview.TextView
 
 func main() {
+
+	app := tview.NewApplication()
 
 	lang.InitTranslations()
 	lang.SetLanguage("zh-CN")
@@ -35,6 +38,10 @@ func main() {
 	initUIBox(outputDaemonView, "Daemon 日志")
 
 	operationView = tview.NewList()
+	operationView.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		app.Sync()
+		return event
+	})
 	initUIBox(operationView, "操作")
 
 	for _, item := range globalOperationCommand {
@@ -50,7 +57,7 @@ func main() {
 		AddItem(outputDaemonView, 0, 1, true).
 		AddItem(outputWebView, 0, 1, true)
 
-	if err := tview.NewApplication().SetRoot(flex, true).Run(); err != nil {
+	if err := app.SetRoot(flex, true).Run(); err != nil {
 		panic(err)
 	}
 
