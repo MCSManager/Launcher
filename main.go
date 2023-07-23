@@ -64,33 +64,13 @@ func onCommand(cmd string) {
 		helpInfo()
 		return
 	}
-	if cmd == "1" {
-		println("成功！")
-		return
-	}
-	if cmd == "2" {
+	if cmd == "start" {
 		go startPanel()
 		return
 	}
-	if cmd == "3" {
-		go stopPanel()
-		return
-	}
-	if cmd == "4" {
-		fmt.Println(color.HiGreenString(lang.T("AdvancedOptionHelp")))
-		return
-	}
-	if cmd == "p1" {
-		outputSubProcessLog(webProcess)
-		return
-	}
-	if cmd == "p2" {
-		outputSubProcessLog(daemonProcess)
-		return
-	}
-	if cmd == "e" {
+
+	if cmd == "exit" {
 		stopPanel()
-		os.Exit(0)
 		return
 	}
 	fmt.Println(color.HiYellowString(lang.T("UnknownCommand")))
