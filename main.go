@@ -107,31 +107,39 @@ func stopPanel() {
 }
 
 func startPanel() {
-
 	if daemonProcess != nil || webProcess != nil {
 		println(color.HiYellowString(lang.T("NotStopped")))
 		return
 	}
 
-	webProcess = startPanelProcess("ping", "www.baidu.com")
-	daemonProcess = startPanelProcess("ping", "www.google.com")
+	webProcess = NewProcessMgr("/", "ping", "exit1", "www.baidu.com")
+	webProcess.Start()
+	daemonProcess = NewProcessMgr("/", "ping", "exit1", "www.baidu.com")
+	daemonProcess.Start()
 
 	var wg sync.WaitGroup
 	wg.Add(2)
-	go func() {
-		<-daemonProcess.ExitEvent
-		webProcess.End()
-		wg.Done()
-	}()
-	go func() {
-		<-webProcess.ExitEvent
-		daemonProcess.End()
-		wg.Done()
-	}()
 
-	printPanelStatus()
+	daemonProcess.ListenExit(func() {
+		wg.Done()
+		webProcess.End()
+	})
+
+	webProcess.ListenExit(func() {
+		wg.Done()
+		daemonProcess.End()
+	})
+
+	// daemonProcess.ListenStdout(func(text string) {
+	// 	fmt.Println("XZX: " + text)
+	// })
+
+	// webProcess.ListenStdout(func(text string) {
+	// 	fmt.Println("AAA: " + text)
+	// })
 
 	wg.Wait()
+	fmt.Println("程序退出")
 	webProcess = nil
 	daemonProcess = nil
 }
@@ -141,32 +149,4 @@ func outputSubProcessLog(process *ProcessMgr) {
 		return
 	}
 	process.IsOpenStdout = !process.IsOpenStdout
-}
-
-func startPanelProcess(cmd string, args ...string) *ProcessMgr {
-	process := NewProcessMgr("/", cmd, "exit1", args...)
-	process.Start()
-
-	go func() {
-		for {
-			out, ok := <-process.StdoutEvent
-			if !ok {
-				break
-			}
-			fmt.Print(out)
-		}
-	}()
-
-	go func() {
-		for {
-			out, ok := <-process.ErrEvent
-			if !ok {
-				break
-			}
-			fmt.Println(color.RedString("PROCESS ERR: "), out)
-		}
-	}()
-
-	<-process.StartedEvent
-	return process
 }
