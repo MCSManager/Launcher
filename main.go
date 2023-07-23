@@ -4,7 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"sync"
+	"time"
 
 	"github.com/MCSManager/Launcher/lang"
 	"github.com/fatih/color"
@@ -12,16 +14,47 @@ import (
 
 var webProcess *ProcessMgr
 var daemonProcess *ProcessMgr
+var totalSecond int64
+var defaultHttpAddr = "http://127.0.0.1:23333"
 
 func main() {
 
 	lang.InitTranslations()
 	lang.SetLanguage("zh-CN")
-	helpInfo()
+
+	go func() {
+		for {
+
+			clearTerminal()
+			totalSecond = totalSecond + 1
+			days, hours, minutes, remainingSeconds := formatDuration(totalSecond)
+			fmt.Println(color.HiGreenString("---------------------------"))
+			fmt.Println(color.HiGreenString(lang.T("WelcomeTip")))
+			// fmt.Println(color.WhiteString(" " + lang.T("SoftwareInfo")))
+			fmt.Println(color.HiGreenString("---------------------------"))
+			fmt.Println()
+			fmt.Println(color.HiGreenString(lang.T("PanelStatus")) + getPanelStatusText())
+			fmt.Println()
+			fmt.Println(color.WhiteString(lang.FT("RunTime", map[string]interface{}{
+				"Time": color.HiYellowString(lang.FT("TimeText", map[string]interface{}{
+					"D": days,
+					"H": hours,
+					"M": minutes,
+					"S": remainingSeconds,
+				})),
+			})))
+			fmt.Println(lang.FT("Address", map[string]interface{}{
+				"Url": color.HiYellowString(defaultHttpAddr),
+			}))
+
+			fmt.Println(color.WhiteString(lang.T("ExitTip")))
+
+			time.Sleep(1000 * time.Millisecond)
+		}
+	}()
+
 	scanner := bufio.NewScanner(os.Stdin)
-
 	for {
-
 		if !scanner.Scan() {
 			break
 		}
@@ -34,6 +67,20 @@ func main() {
 		fmt.Fprintln(os.Stderr, "error:", err)
 		os.Exit(1)
 	}
+}
+
+func getPanelStatusText() string {
+	var panelStatus = color.HiRedString(lang.T("stopped"))
+	if webProcess != nil && daemonProcess != nil && webProcess.Started && daemonProcess.Started {
+		panelStatus = color.GreenString(lang.T("running"))
+	}
+	return panelStatus
+}
+
+func clearTerminal() {
+	c := exec.Command("clear")
+	c.Stdout = os.Stdout
+	c.Run()
 }
 
 func printPanelStatus() {
