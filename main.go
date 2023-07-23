@@ -28,14 +28,14 @@ func main() {
 			clearTerminal()
 			totalSecond = totalSecond + 1
 			days, hours, minutes, remainingSeconds := formatDuration(totalSecond)
+
 			fmt.Println(color.HiGreenString("---------------------------"))
 			fmt.Println(color.HiGreenString(lang.T("WelcomeTip")))
-			// fmt.Println(color.WhiteString(" " + lang.T("SoftwareInfo")))
+			fmt.Println(color.CyanString(lang.T("SoftwareInfo")))
 			fmt.Println(color.HiGreenString("---------------------------"))
 			fmt.Println()
 			fmt.Println(color.HiGreenString(lang.T("PanelStatus")) + getPanelStatusText())
-			fmt.Println()
-			fmt.Println(color.WhiteString(lang.FT("RunTime", map[string]interface{}{
+			fmt.Println(color.HiGreenString(lang.FT("RunTime", map[string]interface{}{
 				"Time": color.HiYellowString(lang.FT("TimeText", map[string]interface{}{
 					"D": days,
 					"H": hours,
@@ -43,6 +43,8 @@ func main() {
 					"S": remainingSeconds,
 				})),
 			})))
+			fmt.Println()
+
 			fmt.Println(lang.FT("Address", map[string]interface{}{
 				"Url": color.HiYellowString(defaultHttpAddr),
 			}))
@@ -83,40 +85,13 @@ func clearTerminal() {
 	c.Run()
 }
 
-func printPanelStatus() {
-	fmt.Print(lang.T("PanelStatus"))
-	if webProcess != nil && webProcess.Started {
-		fmt.Println(color.GreenString(lang.T("running")))
-	} else {
-		fmt.Println(color.RedString(lang.T("stopped")))
-	}
-}
-
-func helpInfo() {
-	color.Green(lang.T("WelcomeTip"))
-
-	fmt.Println()
-	printPanelStatus()
-
-	fmt.Println()
-	fmt.Println(lang.T("HelpList"))
-
-	fmt.Println()
-	fmt.Println(color.HiYellowString(lang.T("PleaseInput")))
-
-}
-
 func onCommand(cmd string) {
-	if cmd == "h" {
-		helpInfo()
-		return
-	}
-	if cmd == "start" {
+	if cmd == "s" {
 		go startPanel()
 		return
 	}
 
-	if cmd == "exit" {
+	if cmd == "c" {
 		stopPanel()
 		return
 	}
@@ -128,9 +103,8 @@ func stopPanel() {
 		webProcess.End()
 		daemonProcess.End()
 		fmt.Println(color.GreenString(lang.T("CommandSendSuccess")))
-		return
+		os.Exit(0)
 	}
-	fmt.Println(color.HiYellowString(lang.T("NotRunning")))
 }
 
 func startPanel() {
@@ -157,13 +131,13 @@ func startPanel() {
 		daemonProcess.End()
 	})
 
-	// daemonProcess.ListenStdout(func(text string) {
-	// 	fmt.Println("XZX: " + text)
-	// })
+	daemonProcess.ListenStdout(func(text string) {
+		fmt.Println("XZX: " + text)
+	})
 
-	// webProcess.ListenStdout(func(text string) {
-	// 	fmt.Println("AAA: " + text)
-	// })
+	webProcess.ListenStdout(func(text string) {
+		fmt.Println("AAA: " + text)
+	})
 
 	wg.Wait()
 	fmt.Println("程序退出")
