@@ -22,40 +22,45 @@ func main() {
 	lang.InitTranslations()
 	lang.SetLanguage("zh-CN")
 
-	go func() {
-		for {
+	// go func() {
+	// 	for {
+	clearTerminal()
 
-			clearTerminal()
-			totalSecond = totalSecond + 1
-			days, hours, minutes, remainingSeconds := formatDuration(totalSecond)
+	go startPanel()
+	time.Sleep(1000 * time.Millisecond)
 
-			fmt.Println(color.HiGreenString("---------------------------"))
-			fmt.Println(color.HiGreenString(lang.T("WelcomeTip")))
-			fmt.Println(color.CyanString(lang.T("SoftwareInfo")))
-			fmt.Println(color.HiGreenString("---------------------------"))
-			fmt.Println()
-			fmt.Println(color.HiGreenString(lang.T("PanelStatus")) + getPanelStatusText())
-			fmt.Println(color.HiGreenString(lang.FT("RunTime", map[string]interface{}{
-				"Time": color.HiYellowString(lang.FT("TimeText", map[string]interface{}{
-					"D": days,
-					"H": hours,
-					"M": minutes,
-					"S": remainingSeconds,
-				})),
-			})))
-			fmt.Println()
+	// totalSecond = totalSecond + 1
+	// days, hours, minutes, remainingSeconds := formatDuration(totalSecond)
 
-			fmt.Println(lang.FT("Address", map[string]interface{}{
-				"Url": color.HiYellowString(defaultHttpAddr),
-			}))
+	fmt.Println(color.HiGreenString("---------------------------"))
+	fmt.Println(color.HiGreenString(lang.T("WelcomeTip")))
+	fmt.Println(color.CyanString(lang.T("SoftwareInfo")))
+	fmt.Println(color.HiGreenString("---------------------------"))
+	fmt.Println()
+	fmt.Println(color.HiGreenString(lang.T("PanelStatus")) + getPanelStatusText())
+	// fmt.Println(color.HiGreenString(lang.FT("RunTime", map[string]interface{}{
+	// 	"Time": color.HiYellowString(lang.FT("TimeText", map[string]interface{}{
+	// 		"D": days,
+	// 		"H": hours,
+	// 		"M": minutes,
+	// 		"S": remainingSeconds,
+	// 	})),
+	// })))
+	fmt.Println()
 
-			fmt.Println(color.WhiteString(lang.T("ExitTip")))
+	fmt.Println(lang.FT("Address", map[string]interface{}{
+		"Url": color.HiYellowString(defaultHttpAddr),
+	}))
 
-			time.Sleep(1000 * time.Millisecond)
-		}
-	}()
+	fmt.Println(color.WhiteString(lang.T("ExitTip")))
+	fmt.Println()
+
+	// 		time.Sleep(1000 * time.Millisecond)
+	// 	}
+	// }()
 
 	scanner := bufio.NewScanner(os.Stdin)
+
 	for {
 		if !scanner.Scan() {
 			break
@@ -80,7 +85,8 @@ func getPanelStatusText() string {
 }
 
 func clearTerminal() {
-	c := exec.Command("clear")
+	// c := exec.Command("clear")
+	c := exec.Command("cmd", "/c", "cls")
 	c.Stdout = os.Stdout
 	c.Run()
 }
@@ -131,16 +137,16 @@ func startPanel() {
 		daemonProcess.End()
 	})
 
-	daemonProcess.ListenStdout(func(text string) {
-		fmt.Println("XZX: " + text)
-	})
+	// daemonProcess.ListenStdout(func(text string) {
+	// 	fmt.Println("XZX: " + text)
+	// })
 
-	webProcess.ListenStdout(func(text string) {
-		fmt.Println("AAA: " + text)
-	})
+	// webProcess.ListenStdout(func(text string) {
+	// 	fmt.Println("AAA: " + text)
+	// })
 
 	wg.Wait()
-	fmt.Println("程序退出")
+
 	webProcess = nil
 	daemonProcess = nil
 }
