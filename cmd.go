@@ -56,11 +56,7 @@ func (pm *ProcessMgr) ListenExit(fn func()) {
 	pm.listenExit = fn
 }
 
-func (pm *ProcessMgr) Start() {
-	go pm.run()
-}
-
-func (pm *ProcessMgr) run() error {
+func (pm *ProcessMgr) Start() error {
 	os.Chdir(pm.Cwd)
 	pm.StartCount += 1
 	pm.cmder = exec.Command(pm.Path, pm.Args...)
@@ -93,14 +89,19 @@ func (pm *ProcessMgr) run() error {
 	go pm.readStream(pm.stdout)
 	go pm.readStream(pm.stderr)
 
-	pm.Started = true
-	pm.cmder.Wait()
-	pm.Started = false
-	if pm.listenExit != nil {
-		pm.listenExit()
-	}
-	pm.wg.Wait()
-	pm.close()
+	go func() {
+		pm.Started = true
+		pm.cmder.Wait()
+
+		// Process exit event
+		pm.Started = false
+		if pm.listenExit != nil {
+			pm.listenExit()
+		}
+		pm.wg.Wait()
+		pm.close()
+	}()
+
 	return nil
 }
 
@@ -148,15 +149,13 @@ func (pm *ProcessMgr) End() error {
 	defer pm.stdin.Close()
 	defer pm.stdout.Close()
 	_, err := pm.stdin.Write([]byte(pm.StopCommand + "\n"))
-
-	go pm.ExitCheck()
+	pm.ExitCheck()
 	return err
 }
 
 func (pm *ProcessMgr) ExitCheck() error {
-	time.Sleep(5 * time.Second)
-	tmpStartCount := pm.StartCount
-	if pm.Started && pm.StartCount == tmpStartCount {
+	time.Sleep(4 * time.Second)
+	if pm.Started {
 		pid := pm.cmder.Process.Pid
 		// Only Windows support taskkill
 		cmder := exec.Command("taskkill", "/PID", strconv.Itoa(pid), "/T", "/F")

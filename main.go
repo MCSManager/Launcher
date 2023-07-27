@@ -22,30 +22,21 @@ func main() {
 	lang.InitTranslations()
 	lang.SetLanguage("zh-CN")
 
-	// go func() {
-	// 	for {
 	clearTerminal()
-
-	go startPanel()
-	time.Sleep(1000 * time.Millisecond)
-
-	// totalSecond = totalSecond + 1
-	// days, hours, minutes, remainingSeconds := formatDuration(totalSecond)
 
 	fmt.Println(color.HiGreenString("---------------------------"))
 	fmt.Println(color.HiGreenString(lang.T("WelcomeTip")))
 	fmt.Println(color.CyanString(lang.T("SoftwareInfo")))
 	fmt.Println(color.HiGreenString("---------------------------"))
-	fmt.Println()
-	fmt.Println(color.HiGreenString(lang.T("PanelStatus")) + getPanelStatusText())
-	// fmt.Println(color.HiGreenString(lang.FT("RunTime", map[string]interface{}{
-	// 	"Time": color.HiYellowString(lang.FT("TimeText", map[string]interface{}{
-	// 		"D": days,
-	// 		"H": hours,
-	// 		"M": minutes,
-	// 		"S": remainingSeconds,
-	// 	})),
-	// })))
+
+	go startPanel()
+
+	// time.Sleep(5000 * time.Millisecond)
+
+	// if !getPanelStatus() {
+	// 	return
+	// }
+
 	fmt.Println()
 
 	fmt.Println(lang.FT("Address", map[string]interface{}{
@@ -54,10 +45,6 @@ func main() {
 
 	fmt.Println(color.WhiteString(lang.T("ExitTip")))
 	fmt.Println()
-
-	// 		time.Sleep(1000 * time.Millisecond)
-	// 	}
-	// }()
 
 	scanner := bufio.NewScanner(os.Stdin)
 
@@ -84,6 +71,10 @@ func getPanelStatusText() string {
 	return panelStatus
 }
 
+func getPanelStatus() bool {
+	return webProcess != nil && daemonProcess != nil && webProcess.Started && daemonProcess.Started
+}
+
 func clearTerminal() {
 	// c := exec.Command("clear")
 	c := exec.Command("cmd", "/c", "cls")
@@ -92,61 +83,92 @@ func clearTerminal() {
 }
 
 func onCommand(cmd string) {
-	if cmd == "s" {
-		go startPanel()
-		return
-	}
+	// if cmd == "start" {
+	// 	go startPanel()
+	// 	return
+	// }
 
-	if cmd == "c" {
+	if cmd == "stop" {
 		stopPanel()
 		return
 	}
-	fmt.Println(color.HiYellowString(lang.T("UnknownCommand")))
+
+	logErr(lang.T("UnknownCommand") + cmd)
 }
 
 func stopPanel() {
 	if webProcess != nil && daemonProcess != nil {
-		webProcess.End()
+		logInfo(lang.T("stoppingPanel"))
 		daemonProcess.End()
-		fmt.Println(color.GreenString(lang.T("CommandSendSuccess")))
-		os.Exit(0)
+		webProcess.End()
+
 	}
 }
 
 func startPanel() {
 	if daemonProcess != nil || webProcess != nil {
-		println(color.HiYellowString(lang.T("NotStopped")))
+		logErr(color.HiYellowString(lang.T("NotStopped")))
 		return
 	}
 
-	webProcess = NewProcessMgr("/", "ping", "exit1", "www.baidu.com")
-	webProcess.Start()
-	daemonProcess = NewProcessMgr("/", "ping", "exit1", "www.baidu.com")
-	daemonProcess.Start()
+	daemonProcess = NewProcessMgr("/", "ping", "exit1", "www.google.com")
+	webProcess = NewProcessMgr("/", "ping", "exit1", "www.google.com")
 
 	var wg sync.WaitGroup
 	wg.Add(2)
 
 	daemonProcess.ListenExit(func() {
+		go webProcess.End()
+		logInfo(fmt.Sprintf("%s %s", lang.T("Daemon"), lang.T("DaemonProcessExit")))
 		wg.Done()
-		webProcess.End()
 	})
 
 	webProcess.ListenExit(func() {
+		go daemonProcess.End()
+		logInfo(fmt.Sprintf("%s %s", lang.T("Web"), lang.T("WebProcessExit")))
 		wg.Done()
-		daemonProcess.End()
+	})
+
+	daemonProcess.ListenError(func(err error) {
+		logErr(fmt.Sprintf("%s %s", lang.T("Daemon"), err.Error()))
+	})
+
+	webProcess.ListenError(func(err error) {
+		logErr(fmt.Sprintf("%s %s", lang.T("Web"), err.Error()))
 	})
 
 	// daemonProcess.ListenStdout(func(text string) {
-	// 	fmt.Println("XZX: " + text)
+	// 	logInfo(fmt.Sprintf("%s %s", lang.T("Daemon"), text))
 	// })
 
 	// webProcess.ListenStdout(func(text string) {
-	// 	fmt.Println("AAA: " + text)
+	// 	logInfo(fmt.Sprintf("%s %s", lang.T("Web"), text))
 	// })
+
+	err1 := daemonProcess.Start()
+	if err1 != nil {
+		onPanelExitEvent()
+		return
+	}
+
+	time.Sleep(2 * time.Second)
+
+	err2 := webProcess.Start()
+	if err2 != nil {
+		daemonProcess.End()
+		onPanelExitEvent()
+		return
+	}
 
 	wg.Wait()
 
-	webProcess = nil
-	daemonProcess = nil
+	onPanelExitEvent()
+}
+
+func onPanelExitEvent() {
+	// webProcess = nil
+	// daemonProcess = nil
+
+	fmt.Println()
+	logErr(lang.T("ExitedTip"))
 }
