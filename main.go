@@ -11,6 +11,7 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
@@ -131,7 +132,7 @@ func main() {
 		}
 	}
 
-	window.SetCloseIntercept(func() {
+	stopButton := widget.NewButton("关闭程序", func() {
 		dialog.ShowConfirm("警告", "确定要退出程序吗？", func(b bool) {
 			if b {
 				if daemon.Started {
@@ -143,9 +144,33 @@ func main() {
 		}, window)
 	})
 
+	if desk, ok := app.(desktop.App); ok {
+		m := fyne.NewMenu("MCSManager",
+			fyne.NewMenuItem("显示", func() {
+				window.Show()
+			}))
+			fyne.NewMenuItem("关闭", func() {
+				window.Show()
+				dialog.ShowConfirm("警告", "确定要退出程序吗？", func(b bool) {
+					if b {
+						if daemon.Started {
+							dialog.ShowInformation("错误", "您必须关闭后台程序才能关闭本窗口", window)
+							return
+						}
+						os.Exit(0)
+					}
+				}, window)
+			})
+		desk.SetSystemTrayMenu(m)
+	}
+
+	window.SetCloseIntercept(func() {
+		window.Hide()
+	})
+
 	paddingContainer1 := container.New(layout.NewPaddedLayout(), infoLabel.Canvas)
 	paddingContainer2 := container.New(layout.NewPaddedLayout(), container.New(layout.NewVBoxLayout(), statusLabel.Canvas, tipLabelWrapper))
-	paddingContainer3 := container.New(layout.NewPaddedLayout(), container.New(layout.NewVBoxLayout(), btnWrapper, openBrowser))
+	paddingContainer3 := container.New(layout.NewPaddedLayout(), container.New(layout.NewVBoxLayout(), btnWrapper, openBrowser, stopButton))
 	content := container.New(layout.NewVBoxLayout(), paddingContainer1, layout.NewSpacer(), paddingContainer2, paddingContainer3)
 	window.SetContent(container.New(layout.NewPaddedLayout(), content))
 	window.ShowAndRun()
