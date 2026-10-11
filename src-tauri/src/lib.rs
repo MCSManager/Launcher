@@ -198,6 +198,7 @@ pub fn run() {
             commands::check_start_conflict,
             commands::force_free_port,
             commands::get_app_info,
+            commands::open_service_folder,
         ])
         .on_window_event(move |window, event| {
             match event {

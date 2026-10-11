@@ -152,6 +152,12 @@ export function createMockBridge(overrides?: Partial<Bridge>): MockBridge {
       }
       return { version: "0.0.0-test", configPath: "test-config.json" };
     },
+    async openServiceFolder(id: string): Promise<void> {
+      calls.push({ name: "openServiceFolder", args: [id] });
+      if (overrides?.openServiceFolder) {
+        return overrides.openServiceFolder(id);
+      }
+    },
     onStatus(cb) {
       calls.push({ name: "onStatus", args: [cb] });
       if (overrides?.onStatus) {

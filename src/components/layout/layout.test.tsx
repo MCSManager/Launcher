@@ -22,6 +22,8 @@ function renderTopBar(
     onStopAll: () => {},
     onOpenSettings: () => {},
     onOpenExternal: () => {},
+    onOpenDaemonFolder: () => {},
+    onOpenPanelFolder: () => {},
     busy: false,
     hasActiveServices: false,
     ...overrides,
@@ -91,6 +93,47 @@ describe("layout", () => {
     expect(
       screen.queryByRole("button", { name: en["browser.openExternal"] }),
     ).not.toBeInTheDocument();
+  });
+
+  it("folder_buttons_open_the_daemon_and_panel_folders", async () => {
+    const user = userEvent.setup();
+    const onOpenDaemonFolder = vi.fn();
+    const onOpenPanelFolder = vi.fn();
+    renderTopBar({ onOpenDaemonFolder, onOpenPanelFolder });
+    await user.click(screen.getByRole("button", { name: en["action.openDaemonFolder"] }));
+    await user.click(screen.getByRole("button", { name: en["action.openPanelFolder"] }));
+    expect(onOpenDaemonFolder).toHaveBeenCalledTimes(1);
+    expect(onOpenPanelFolder).toHaveBeenCalledTimes(1);
+  });
+
+  it("folder_buttons_sit_inside_topbar_actions", () => {
+    renderTopBar();
+    const actions = document.querySelector(".topbar-actions");
+    expect(actions).not.toBeNull();
+    const daemon = screen.getByRole("button", { name: en["action.openDaemonFolder"] });
+    const panel = screen.getByRole("button", { name: en["action.openPanelFolder"] });
+    expect(actions?.contains(daemon)).toBe(true);
+    expect(actions?.contains(panel)).toBe(true);
+  });
+
+  it("folder buttons invoke the bridge for the matching service", async () => {
+    const user = userEvent.setup();
+    const mock = createMockBridge();
+    render(<App bridge={mock} />);
+    await user.click(screen.getByRole("button", { name: en["action.openDaemonFolder"] }));
+    await user.click(screen.getByRole("button", { name: en["action.openPanelFolder"] }));
+    expect(mock.calls).toContainEqual({ name: "openServiceFolder", args: ["daemon"] });
+    expect(mock.calls).toContainEqual({ name: "openServiceFolder", args: ["panel"] });
+  });
+
+  it("shows an error dialog when opening a folder fails", async () => {
+    const user = userEvent.setup();
+    const mock = createMockBridge({
+      openServiceFolder: () => Promise.reject(new Error("open failed")),
+    });
+    render(<App bridge={mock} />);
+    await user.click(screen.getByRole("button", { name: en["action.openDaemonFolder"] }));
+    expect(await screen.findByText(en["error.openFolder.title"])).toBeInTheDocument();
   });
 
   it("start_all_button_shows_with_green_border_when_services_are_inactive", () => {

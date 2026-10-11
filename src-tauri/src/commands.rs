@@ -311,6 +311,25 @@ pub fn get_app_info(state: State<'_, AppState>) -> AppInfo {
     }
 }
 
+/// Resolves the on-disk folder of a service, rejecting unknown ids and folders
+/// that are not present next to the executable.
+fn resolve_service_folder(id: &str) -> Result<PathBuf, String> {
+    let dir = config::service_dir(id).ok_or_else(|| format!("unknown service id: {}", id))?;
+    if !dir.is_dir() {
+        return Err(format!("service folder not found: {}", dir.display()));
+    }
+    Ok(dir)
+}
+
+/// Opens the service's folder in the system file explorer.
+#[tauri::command]
+pub fn open_service_folder(id: String, app: tauri::AppHandle) -> Result<(), String> {
+    let dir = resolve_service_folder(&id)?;
+    app.opener()
+        .open_path(dir.to_string_lossy().into_owned(), None::<&str>)
+        .map_err(|error| error.to_string())
+}
+
 #[tauri::command]
 pub fn probe_tcp(host: String, port: u16, timeout_ms: u64) -> bool {
     let Ok(mut addrs) = (host.as_str(), port).to_socket_addrs() else {
@@ -730,5 +749,30 @@ mod tests {
             "busy-a must settle to Stopped after the stop request completes"
         );
         read_manager(&manager).shutdown();
+    }
+
+    #[test]
+    fn resolve_service_folder_rejects_unknown_id() {
+        let err = resolve_service_folder("unknown").expect_err("unknown service must not resolve");
+        assert!(
+            err.contains("unknown"),
+            "error must mention the unknown id: {}",
+            err
+        );
+    }
+
+    #[test]
+    fn resolve_service_folder_resolves_known_service_dirs() {
+        let daemon = resolve_service_folder("daemon").expect("daemon folder must resolve");
+        assert_eq!(
+            daemon,
+            crate::config::service_dir("daemon").expect("daemon dir")
+        );
+
+        let panel = resolve_service_folder("panel").expect("panel folder must resolve");
+        assert_eq!(
+            panel,
+            crate::config::service_dir("panel").expect("panel dir")
+        );
     }
 }

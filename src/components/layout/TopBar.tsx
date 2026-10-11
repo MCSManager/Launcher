@@ -10,6 +10,8 @@ export function TopBar({
   onStopAll,
   onOpenSettings,
   onOpenExternal,
+  onOpenDaemonFolder,
+  onOpenPanelFolder,
   busy,
   hasActiveServices,
 }: {
@@ -19,6 +21,8 @@ export function TopBar({
   onStopAll: () => void;
   onOpenSettings: () => void;
   onOpenExternal: () => void;
+  onOpenDaemonFolder: () => void;
+  onOpenPanelFolder: () => void;
   busy: boolean;
   hasActiveServices: boolean;
 }) {
@@ -61,6 +65,24 @@ export function TopBar({
             <span>{t("action.startAll")}</span>
           </button>
         )}
+        <button
+          type="button"
+          className="topbar-btn topbar-btn--icon"
+          onClick={onOpenDaemonFolder}
+          aria-label={t("action.openDaemonFolder")}
+          title={t("action.openDaemonFolder")}
+        >
+          <Icon name="folderDaemon" />
+        </button>
+        <button
+          type="button"
+          className="topbar-btn topbar-btn--icon"
+          onClick={onOpenPanelFolder}
+          aria-label={t("action.openPanelFolder")}
+          title={t("action.openPanelFolder")}
+        >
+          <Icon name="folderWeb" />
+        </button>
         <LanguageSwitcher language={language} onChange={setLanguage} />
         <button
           type="button"

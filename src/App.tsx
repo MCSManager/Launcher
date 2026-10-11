@@ -14,16 +14,18 @@ import { useServices } from "./hooks/useServices";
 import { useStartup, DEFAULT_SETTLE_DELAY_MS } from "./hooks/useStartup";
 import { openExternal } from "./services/openExternal";
 import { PortGuardProvider } from "./services/portGuard";
-import { BridgeProvider, bridge as realBridge, type Bridge } from "./services/bridge";
+import { BridgeProvider, bridge as realBridge, useBridge, type Bridge } from "./services/bridge";
 
 const DEFAULT_PANEL_URL = "http://localhost:23333";
 const HOST = "127.0.0.1";
 
 function AppShell({ settleDelayMs }: { settleDelayMs?: number }) {
   const { t } = useI18n();
+  const bridge = useBridge();
   const [tab, setTab] = useState<TabId>("panel");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [missingFilesOpen, setMissingFilesOpen] = useState(false);
+  const [folderError, setFolderError] = useState<"daemon" | "panel" | null>(null);
   const missingFilesShownRef = useRef(false);
   const { config, warnings, pathIssues, loaded, saving, error, save } = useConfig();
   const { failure: downloadFailure, dismiss: dismissDownloadFailure } = useDownloadError();
@@ -69,6 +71,12 @@ function AppShell({ settleDelayMs }: { settleDelayMs?: number }) {
   });
   const panelPhase = panelEnabled ? startup.phase : "idle";
   const showConsole = useCallback(() => setTab("dashboard"), []);
+  const openFolder = useCallback(
+    (id: "daemon" | "panel") => {
+      void bridge.openServiceFolder(id).catch(() => setFolderError(id));
+    },
+    [bridge],
+  );
 
   return (
     <div className="app-shell">
@@ -93,6 +101,8 @@ function AppShell({ settleDelayMs }: { settleDelayMs?: number }) {
         onStopAll={() => void stopAll()}
         onOpenSettings={() => setSettingsOpen(true)}
         onOpenExternal={() => void openExternal(panelUrl).catch(() => {})}
+        onOpenDaemonFolder={() => openFolder("daemon")}
+        onOpenPanelFolder={() => openFolder("panel")}
         busy={busy}
         hasActiveServices={hasActiveServices}
       />
@@ -112,6 +122,17 @@ function AppShell({ settleDelayMs }: { settleDelayMs?: number }) {
           message={t("error.missingFiles.message")}
           confirmLabel={t("action.ok")}
           onConfirm={() => setMissingFilesOpen(false)}
+        />
+      ) : null}
+      {folderError ? (
+        <AppDialog
+          testId="open-folder-error-dialog"
+          title={t("error.openFolder.title")}
+          message={t("error.openFolder.message", {
+            service: t(folderError === "daemon" ? "service.daemon.name" : "service.panel.name"),
+          })}
+          confirmLabel={t("action.ok")}
+          onConfirm={() => setFolderError(null)}
         />
       ) : null}
       {downloadFailure ? (

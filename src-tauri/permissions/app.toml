@@ -20,4 +20,5 @@ commands.allow = [
     "check_start_conflict",
     "force_free_port",
     "get_app_info",
+    "open_service_folder",
 ]

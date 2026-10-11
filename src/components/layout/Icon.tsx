@@ -11,7 +11,9 @@ export type IconName =
   | "trash"
   | "logo"
   | "alert"
-  | "terminal";
+  | "terminal"
+  | "folderDaemon"
+  | "folderWeb";
 
 function shapeFor(name: IconName): ReactNode {
   switch (name) {
@@ -43,14 +45,14 @@ function shapeFor(name: IconName): ReactNode {
     case "settings":
       return (
         <>
-          <circle cx="8" cy="8" r="2.1" fill="none" stroke="currentColor" strokeWidth="1.4" />
           <path
-            d="M8 1.7v2M8 12.3v2M14.3 8h-2M3.7 8h-2M12.5 3.5l-1.4 1.4M4.9 11.1l-1.4 1.4M12.5 12.5l-1.4-1.4M4.9 4.9L3.5 3.5"
+            d="M14.18 6.77L14.18 9.23L12.41 8.88L11.74 10.5L13.24 11.5L11.5 13.24L10.5 11.74L8.88 12.41L9.23 14.18L6.77 14.18L7.12 12.41L5.5 11.74L4.5 13.24L2.76 11.5L4.26 10.5L3.59 8.88L1.82 9.23L1.82 6.77L3.59 7.12L4.26 5.5L2.76 4.5L4.5 2.76L5.5 4.26L7.12 3.59L6.77 1.82L9.23 1.82L8.88 3.59L10.5 4.26L11.5 2.76L13.24 4.5L11.74 5.5L12.41 7.12Z"
             fill="none"
             stroke="currentColor"
             strokeWidth="1.4"
-            strokeLinecap="round"
+            strokeLinejoin="round"
           />
+          <circle cx="8" cy="8" r="1.9" fill="none" stroke="currentColor" strokeWidth="1.4" />
         </>
       );
     case "globe":
@@ -200,6 +202,57 @@ function shapeFor(name: IconName): ReactNode {
             y2="10"
             stroke="currentColor"
             strokeWidth="1.4"
+            strokeLinecap="round"
+          />
+        </>
+      );
+    case "folderDaemon":
+      return (
+        <>
+          <path
+            d="M1.9 12.4V4.1c0-.6.5-1.1 1.1-1.1h3l1.3 1.5h5.7c.6 0 1.1.5 1.1 1.1v6.8c0 .6-.5 1.1-1.1 1.1H3c-.6 0-1.1-.5-1.1-1.1z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <polyline
+            points="6.1,7.6 7.6,9 6.1,10.4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.1"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <line
+            x1="8.6"
+            y1="10.5"
+            x2="10.3"
+            y2="10.5"
+            stroke="currentColor"
+            strokeWidth="1.1"
+            strokeLinecap="round"
+          />
+        </>
+      );
+    case "folderWeb":
+      return (
+        <>
+          <path
+            d="M1.9 12.4V4.1c0-.6.5-1.1 1.1-1.1h3l1.3 1.5h5.7c.6 0 1.1.5 1.1 1.1v6.8c0 .6-.5 1.1-1.1 1.1H3c-.6 0-1.1-.5-1.1-1.1z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <circle cx="7.9" cy="8.9" r="2.1" fill="none" stroke="currentColor" strokeWidth="1.1" />
+          <path
+            d="M7.9 6.8c.9 1 1 3.2 0 4.2M7.9 6.8c-.9 1-1 3.2 0 4.2M5.8 8.9h4.2"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.1"
             strokeLinecap="round"
           />
         </>
