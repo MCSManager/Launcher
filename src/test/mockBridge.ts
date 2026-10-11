@@ -3,6 +3,7 @@ import type {
   AppConfig,
   AppInfo,
   ConfigResponse,
+  DownloadResult,
   OutputLine,
   ServiceConfig,
   ServiceStatus,
@@ -12,6 +13,7 @@ export interface MockBridge extends Bridge {
   emitStatus(s: ServiceStatus): void;
   emitOutput(o: OutputLine): void;
   emitError(e: { id: string; message: string }): void;
+  emitDownloadResult(r: DownloadResult): void;
   calls: { name: string; args: unknown[] }[];
   config: AppConfig;
 }
@@ -47,6 +49,7 @@ export function createMockBridge(overrides?: Partial<Bridge>): MockBridge {
   const statusListeners = new Set<(s: ServiceStatus) => void>();
   const outputListeners = new Set<(o: OutputLine) => void>();
   const errorListeners = new Set<(e: { id: string; message: string }) => void>();
+  const downloadListeners = new Set<(r: DownloadResult) => void>();
 
   const mock: MockBridge = {
     config: makeDefaultConfig(),
@@ -64,6 +67,11 @@ export function createMockBridge(overrides?: Partial<Bridge>): MockBridge {
     emitError(e) {
       for (const cb of [...errorListeners]) {
         cb(e);
+      }
+    },
+    emitDownloadResult(r) {
+      for (const cb of [...downloadListeners]) {
+        cb(r);
       }
     },
     async getConfig(): Promise<ConfigResponse> {
@@ -172,6 +180,16 @@ export function createMockBridge(overrides?: Partial<Bridge>): MockBridge {
       errorListeners.add(cb);
       return () => {
         errorListeners.delete(cb);
+      };
+    },
+    onDownloadResult(cb) {
+      calls.push({ name: "onDownloadResult", args: [cb] });
+      if (overrides?.onDownloadResult) {
+        return overrides.onDownloadResult(cb);
+      }
+      downloadListeners.add(cb);
+      return () => {
+        downloadListeners.delete(cb);
       };
     },
   };

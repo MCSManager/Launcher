@@ -506,4 +506,27 @@ describe("app integration flows", () => {
       expect(mock.calls).toContainEqual({ name: "startAll", args: [] });
     });
   });
+
+  it("shows a dialog when a download fails", async () => {
+    const user = userEvent.setup();
+    const mock = createMockBridge();
+    await renderReadyApp(mock);
+
+    await act(async () => {
+      mock.emitDownloadResult({
+        status: "failed",
+        fileName: "server.jar",
+        message: "connection reset",
+      });
+    });
+
+    expect(screen.getByTestId("download-failed-dialog")).toBeInTheDocument();
+    expect(
+      screen.getByText(en["download.failed.message"].replace("{fileName}", "server.jar")),
+    ).toBeInTheDocument();
+    expect(screen.getByText("connection reset")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: en["action.ok"] }));
+    expect(screen.queryByTestId("download-failed-dialog")).not.toBeInTheDocument();
+  });
 });

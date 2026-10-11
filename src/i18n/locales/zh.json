@@ -70,6 +70,8 @@
   "error.startFailed": "启动服务失败",
   "error.saveFailed": "保存设置失败",
   "error.notConfigured": "尚未配置",
+  "download.failed.title": "下载失败",
+  "download.failed.message": "无法保存“{fileName}”。",
   "tray.openPanel": "在浏览器中打开面板",
   "tray.showWindow": "显示主窗口",
   "tray.exit": "退出",

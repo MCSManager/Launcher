@@ -52,3 +52,12 @@ export interface AppInfo {
   version: string;
   configPath: string;
 }
+
+export type DownloadStatus = "saved" | "failed";
+
+export interface DownloadResult {
+  status: DownloadStatus;
+  fileName: string;
+  path?: string;
+  message?: string;
+}

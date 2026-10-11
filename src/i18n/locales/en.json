@@ -70,6 +70,8 @@
   "error.startFailed": "Failed to start service",
   "error.saveFailed": "Failed to save settings",
   "error.notConfigured": "Not configured yet",
+  "download.failed.title": "Download failed",
+  "download.failed.message": "Could not save \"{fileName}\".",
   "tray.openPanel": "Open panel in browser",
   "tray.showWindow": "Show main window",
   "tray.exit": "Exit",

@@ -71,7 +71,7 @@ Commands invoked from the frontend: `get_config`, `save_config`, `get_service_st
 
 Every command registered in `lib.rs`'s `generate_handler![]` **must** be listed in `src-tauri/permissions/app.toml` (`commands.allow`), or `src/test/acl.test.ts` fails.
 
-Events emitted to the frontend: `service-status`, `service-output`, `service-error`.
+Events emitted to the frontend: `service-status`, `service-output`, `service-error`, `download-result`.
 
 ## Development Workflow (TDD)
 

@@ -1,5 +1,6 @@
 mod commands;
 pub mod config;
+pub mod download;
 pub mod process;
 pub mod tray;
 
@@ -59,6 +60,21 @@ fn shell_host_for_panel(panel_url: &str) -> String {
 
 fn fits_target_size(width: f64, height: f64) -> bool {
     width >= TARGET_WIDTH && height >= TARGET_HEIGHT
+}
+
+/// Routes a `window.open` request coming from the embedded panel.
+///
+/// The panel downloads files through `window.open`, and WebView2 reports that
+/// as a new-window request. Daemon download links are saved through the native
+/// save dialog (off the main thread); other web links open in the user's
+/// default browser; everything else is dropped.
+fn handle_new_window_request(app: &tauri::AppHandle, url: tauri::Url) {
+    if download::is_download_request(url.scheme(), url.host_str(), url.path()) {
+        let app = app.clone();
+        std::thread::spawn(move || commands::download_from_url(app, url));
+    } else if matches!(url.scheme(), "http" | "https") {
+        commands::open_external_url(app, &url);
+    }
 }
 
 fn lock_slot(slot: &Mutex<Option<std::thread::JoinHandle<()>>>) -> MutexGuard<'_, Option<std::thread::JoinHandle<()>>> {
@@ -140,10 +156,15 @@ pub fn run() {
                 }
             };
 
+            let new_window_app = app.handle().clone();
             WebviewWindowBuilder::new(app, WINDOW_LABEL, url)
                 .title(WINDOW_TITLE)
                 .inner_size(TARGET_WIDTH, TARGET_HEIGHT)
                 .min_inner_size(MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT)
+                .on_new_window(move |url, _features| {
+                    handle_new_window_request(&new_window_app, url);
+                    tauri::webview::NewWindowResponse::Deny
+                })
                 .build()?;
 
             if let Some(window) = app.get_webview_window(WINDOW_LABEL) {

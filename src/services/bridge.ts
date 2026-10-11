@@ -5,6 +5,7 @@ import type {
   AppConfig,
   AppInfo,
   ConfigResponse,
+  DownloadResult,
   OutputLine,
   ServiceState,
   ServiceStatus,
@@ -73,6 +74,7 @@ export interface Bridge {
   onStatus(cb: (s: ServiceStatus) => void): () => void;
   onOutput(cb: (o: OutputLine) => void): () => void;
   onError(cb: (e: { id: string; message: string }) => void): () => void;
+  onDownloadResult(cb: (result: DownloadResult) => void): () => void;
 }
 
 export const bridge: Bridge = {
@@ -93,6 +95,7 @@ export const bridge: Bridge = {
     listenTo("service-status", (raw: WireServiceStatus) => cb(normalizeStatus(raw))),
   onOutput: (cb) => listenTo<OutputLine>("service-output", cb),
   onError: (cb) => listenTo("service-error", cb),
+  onDownloadResult: (cb) => listenTo<DownloadResult>("download-result", cb),
 };
 
 const BridgeContext = createContext<Bridge | null>(null);

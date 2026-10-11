@@ -8,6 +8,7 @@ import { TopBar } from "./components/layout/TopBar";
 import type { TabId } from "./components/layout/TabBar";
 import { SettingsModal } from "./components/settings/SettingsModal";
 import { useConfig } from "./hooks/useConfig";
+import { useDownloadError } from "./hooks/useDownloadError";
 import { useReadiness } from "./hooks/useReadiness";
 import { useServices } from "./hooks/useServices";
 import { useStartup, DEFAULT_SETTLE_DELAY_MS } from "./hooks/useStartup";
@@ -25,6 +26,7 @@ function AppShell({ settleDelayMs }: { settleDelayMs?: number }) {
   const [missingFilesOpen, setMissingFilesOpen] = useState(false);
   const missingFilesShownRef = useRef(false);
   const { config, warnings, pathIssues, loaded, saving, error, save } = useConfig();
+  const { failure: downloadFailure, dismiss: dismissDownloadFailure } = useDownloadError();
   const { statuses, startAll, stopAll } = useServices(config?.maxLogLines ?? 2000);
   const busy = Object.values(statuses).some(
     (status) => status.state === "starting" || status.state === "stopping",
@@ -110,6 +112,16 @@ function AppShell({ settleDelayMs }: { settleDelayMs?: number }) {
           message={t("error.missingFiles.message")}
           confirmLabel={t("action.ok")}
           onConfirm={() => setMissingFilesOpen(false)}
+        />
+      ) : null}
+      {downloadFailure ? (
+        <AppDialog
+          testId="download-failed-dialog"
+          title={t("download.failed.title")}
+          message={t("download.failed.message", { fileName: downloadFailure.fileName })}
+          hint={downloadFailure.message}
+          confirmLabel={t("action.ok")}
+          onConfirm={dismissDownloadFailure}
         />
       ) : null}
       <ContextMenu />

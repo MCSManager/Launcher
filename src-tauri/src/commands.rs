@@ -4,7 +4,9 @@ use std::sync::{Arc, Mutex, MutexGuard, RwLock, RwLockReadGuard, RwLockWriteGuar
 use std::time::Duration;
 
 use serde::Serialize;
-use tauri::{Emitter, State};
+use tauri::{Emitter, Manager, State};
+use tauri_plugin_dialog::DialogExt;
+use tauri_plugin_opener::OpenerExt;
 
 use crate::config::{self, AppConfig, ConfigError, ServiceConfig};
 use crate::process::events::{EventSink, OutputStream, ProcessEvent, ProcessSpec, ServiceStatus};
@@ -47,6 +49,97 @@ pub struct OutputEvent {
 pub struct ErrorEvent {
     pub id: String,
     pub message: String,
+}
+
+/// Outcome of a `window.open` download, surfaced to the frontend so failures
+/// are never silent.
+#[derive(Debug, Clone, Copy, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum DownloadStatus {
+    Saved,
+    Failed,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DownloadResult {
+    pub status: DownloadStatus,
+    pub file_name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub path: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub message: Option<String>,
+}
+
+/// Streams a download to a user-chosen path and reports the outcome.
+///
+/// Must be called off the main thread: `blocking_save_file` blocks until the
+/// user answers the native save dialog.
+pub(crate) fn download_from_url(app: tauri::AppHandle, url: tauri::Url) {
+    let file_name = crate::download::suggested_filename(url.path());
+    let mut dialog = app.dialog().file().set_file_name(file_name.clone());
+    if let Ok(downloads) = app.path().download_dir() {
+        dialog = dialog.set_directory(downloads);
+    }
+    let Some(target) = dialog.blocking_save_file() else {
+        return;
+    };
+    let path = match target.into_path() {
+        Ok(path) => path,
+        Err(error) => {
+            emit_download_result(
+                &app,
+                DownloadStatus::Failed,
+                file_name,
+                None,
+                Some(error.to_string()),
+            );
+            return;
+        }
+    };
+    match stream_to_file(url.as_str(), &path) {
+        Ok(()) => emit_download_result(
+            &app,
+            DownloadStatus::Saved,
+            file_name,
+            Some(path.display().to_string()),
+            None,
+        ),
+        Err(message) => {
+            emit_download_result(&app, DownloadStatus::Failed, file_name, None, Some(message))
+        }
+    }
+}
+
+/// Opens a non-download `window.open` target in the user's default browser.
+pub(crate) fn open_external_url(app: &tauri::AppHandle, url: &tauri::Url) {
+    let _ = app.opener().open_url(url.as_str(), None::<&str>);
+}
+
+fn emit_download_result(
+    app: &tauri::AppHandle,
+    status: DownloadStatus,
+    file_name: String,
+    path: Option<String>,
+    message: Option<String>,
+) {
+    let _ = app.emit(
+        "download-result",
+        DownloadResult {
+            status,
+            file_name,
+            path,
+            message,
+        },
+    );
+}
+
+fn stream_to_file(url: &str, path: &std::path::Path) -> Result<(), String> {
+    let mut response = ureq::get(url).call().map_err(|error| error.to_string())?;
+    let mut reader = response.body_mut().as_reader();
+    let mut file = std::fs::File::create(path).map_err(|error| error.to_string())?;
+    std::io::copy(&mut reader, &mut file).map_err(|error| error.to_string())?;
+    Ok(())
 }
 
 pub fn make_event_sink(app: tauri::AppHandle) -> EventSink {
