@@ -216,10 +216,18 @@ fn show_error(app: &AppHandle, message: &str) {
 }
 
 fn show_main_window(app: &AppHandle) {
-    if let Some(window) = app.get_webview_window(crate::WINDOW_LABEL) {
-        let _ = window.show();
-        let _ = window.unminimize();
-        let _ = window.set_focus();
+    match app.get_webview_window(crate::WINDOW_LABEL) {
+        Some(window) => {
+            let _ = window.show();
+            let _ = window.unminimize();
+            let _ = window.set_focus();
+        }
+        None => {
+            // The window was closed to free its WebView; rebuild it on demand.
+            if let Err(error) = crate::create_main_window(app) {
+                show_error(app, &error.to_string());
+            }
+        }
     }
 }
 

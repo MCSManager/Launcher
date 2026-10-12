@@ -4,7 +4,7 @@ pub mod download;
 pub mod process;
 pub mod tray;
 
-use std::sync::{Arc, Mutex, MutexGuard, RwLock};
+use std::sync::{Arc, Mutex, RwLock};
 use std::time::Duration;
 
 use tauri::Manager;
@@ -15,7 +15,11 @@ use tauri::{WebviewUrl, WebviewWindowBuilder};
 use commands::{read_manager, AppState};
 use process::manager::ProcessManager;
 
-type ShutdownSlot = Arc<Mutex<Option<std::thread::JoinHandle<()>>>>;
+/// Per-run state needed to (re)create the main window after it is destroyed to
+/// free its WebView in tray mode.
+struct WindowRuntime {
+    url: WebviewUrl,
+}
 
 const TARGET_WIDTH: f64 = 1400.0;
 const TARGET_HEIGHT: f64 = 960.0;
@@ -77,14 +81,42 @@ fn handle_new_window_request(app: &tauri::AppHandle, url: tauri::Url) {
     }
 }
 
-fn lock_slot(slot: &Mutex<Option<std::thread::JoinHandle<()>>>) -> MutexGuard<'_, Option<std::thread::JoinHandle<()>>> {
-    slot.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
+/// Creates the main window and lets small monitors maximize it immediately.
+///
+/// Called once at startup and again by the tray whenever the window was closed
+/// to reclaim memory. The URL is fixed per run so the runtime capability
+/// registered at startup keeps matching the same label and origin.
+fn create_main_window(app: &tauri::AppHandle) -> tauri::Result<tauri::WebviewWindow> {
+    let url = app.state::<WindowRuntime>().url.clone();
+    let new_window_app = app.clone();
+    let window = WebviewWindowBuilder::new(app, WINDOW_LABEL, url)
+        .title(WINDOW_TITLE)
+        .inner_size(TARGET_WIDTH, TARGET_HEIGHT)
+        .min_inner_size(MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT)
+        .on_new_window(move |url, _features| {
+            handle_new_window_request(&new_window_app, url);
+            tauri::webview::NewWindowResponse::Deny
+        })
+        .build()?;
+
+    if let Ok(Some(monitor)) = window.primary_monitor() {
+        let logical = monitor.size().to_logical::<f64>(monitor.scale_factor());
+        if !fits_target_size(logical.width, logical.height) {
+            let _ = window.maximize();
+        }
+    }
+    Ok(window)
+}
+
+/// Whether an `ExitRequested` event comes from closing the last window (user
+/// interaction) rather than a programmatic `exit`/`restart` (which carries a
+/// code). Only the former must be prevented so the app keeps living in the tray.
+fn is_user_window_close(code: Option<i32>) -> bool {
+    code.is_none()
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let shutdown: ShutdownSlot = Arc::new(Mutex::new(None));
-    let shutdown_on_close = Arc::clone(&shutdown);
     let localhost_port = pick_unused_port().unwrap_or(0);
 
     tauri::Builder::default()
@@ -156,31 +188,8 @@ pub fn run() {
                 }
             };
 
-            let new_window_app = app.handle().clone();
-            WebviewWindowBuilder::new(app, WINDOW_LABEL, url)
-                .title(WINDOW_TITLE)
-                .inner_size(TARGET_WIDTH, TARGET_HEIGHT)
-                .min_inner_size(MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT)
-                .on_new_window(move |url, _features| {
-                    handle_new_window_request(&new_window_app, url);
-                    tauri::webview::NewWindowResponse::Deny
-                })
-                .build()?;
-
-            if let Some(window) = app.get_webview_window(WINDOW_LABEL) {
-                let fits = window
-                    .primary_monitor()
-                    .ok()
-                    .flatten()
-                    .map(|monitor| {
-                        let logical = monitor.size().to_logical::<f64>(monitor.scale_factor());
-                        fits_target_size(logical.width, logical.height)
-                    })
-                    .unwrap_or(true);
-                if !fits {
-                    let _ = window.maximize();
-                }
-            }
+            app.manage(WindowRuntime { url });
+            create_main_window(app.handle())?;
 
             tray::setup(app.handle())?;
             Ok(())
@@ -200,41 +209,28 @@ pub fn run() {
             commands::get_app_info,
             commands::open_service_folder,
         ])
-        .on_window_event(move |window, event| {
-            match event {
-                // Closing the main window hides it to the tray instead of
-                // exiting: services keep running and "Exit" is the only
-                // intentional shutdown path.
-                tauri::WindowEvent::CloseRequested { api, .. }
-                    if window.label() == WINDOW_LABEL =>
-                {
-                    api.prevent_close();
-                    let _ = window.hide();
-                }
-                tauri::WindowEvent::Destroyed if window.label() == WINDOW_LABEL => {
-                    let manager = Arc::clone(&window.state::<AppState>().manager);
-                    let handle = std::thread::spawn(move || {
-                        read_manager(&manager).shutdown();
-                    });
-                    *lock_slot(&shutdown_on_close) = Some(handle);
-                }
-                _ => {}
-            }
-        })
         .build(tauri::generate_context!())
         .expect("error while running tauri application")
-        .run(move |_app, event| {
-            if let tauri::RunEvent::Exit = event {
-                if let Some(handle) = lock_slot(&shutdown).take() {
-                    let _ = handle.join();
+        .run(move |app, event| match event {
+            // Closing the main window destroys it so its WebView memory is
+            // reclaimed, but the app keeps running in the tray: services stay
+            // up and the window is recreated on demand. Only a programmatic
+            // exit (tray "Exit" -> `app.exit`) may end the process.
+            tauri::RunEvent::ExitRequested { api, code, .. } if is_user_window_close(code) => {
+                api.prevent_exit();
+            }
+            tauri::RunEvent::Exit => {
+                if let Some(state) = app.try_state::<AppState>() {
+                    read_manager(&state.manager).shutdown();
                 }
             }
+            _ => {}
         });
 }
 
 #[cfg(test)]
 mod tests {
-    use super::fits_target_size;
+    use super::{fits_target_size, is_user_window_close};
 
     #[test]
     fn fits_exact_target_size() {
@@ -254,5 +250,16 @@ mod tests {
     #[test]
     fn too_narrow_monitor_does_not_fit() {
         assert!(!fits_target_size(1280.0, 1080.0));
+    }
+
+    #[test]
+    fn closing_the_last_window_must_not_exit() {
+        assert!(is_user_window_close(None));
+    }
+
+    #[test]
+    fn programmatic_exit_is_allowed() {
+        assert!(!is_user_window_close(Some(0)));
+        assert!(!is_user_window_close(Some(1)));
     }
 }
